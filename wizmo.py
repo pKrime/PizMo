@@ -1,8 +1,4 @@
-# Example of a custom widget that defines it's own geometry.
-#
-# Usage: Select a light in the 3D view and drag the arrow at it's rear
-# to change it's energy value.
-#
+
 import bpy
 from bpy.types import (
     Gizmo,
@@ -105,15 +101,3 @@ class GrouzMo(GizmoGroup):
         mpr.alpha_highlight = 0.25
 
         mpr.use_draw_modal = True
-
-    # def refresh(self, context):
-    #
-    #     mat = Matrix((
-    #         (1.0, 0.0, 0.0, 1.0),
-    #         (0.0, 0.0, 1.0, 0.0),
-    #         (0.0, 1.0, 0.0, 0.0),
-    #         (0.0, 0.0, 0.0, 1.0)
-    #     ))
-    #
-    #     #mpr.matrix_basis = mat.normalized()
-    #     # mpr.matrix_basis = ob.matrix_world.normalized()
