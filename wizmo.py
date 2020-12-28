@@ -27,6 +27,8 @@ class Quad2D:
 class BonezMo(Gizmo):
     bl_idname = "VIEW3D_GT_pizmo_bone"
 
+    base_color = 1.0, 0.0, 0.0
+
     __slots__ = (
         "custom_shape",
         "bone_name",
@@ -35,15 +37,21 @@ class BonezMo(Gizmo):
     def _update_offset_matrix(self):
         pass
 
+    def reset_color(self):
+        self.color = self.base_color
+        self.alpha = 0.1
+
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
 
     def draw_select(self, context, select_id):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
 
+    def select_refresh(self):
+        print("sel refresh")
+
     def setup(self):
-        self.color = 1.0, 0.0, 0.0
-        self.alpha = 0.1
+        self.reset_color()
 
         if not hasattr(self, "custom_shape"):
             self.custom_shape = self.new_custom_shape('TRIS', Quad2D.vertices)
@@ -71,8 +79,6 @@ class BonezMo(Gizmo):
 
     def exit(self, context, cancel):
         context.area.header_text_set(None)
-        # if cancel:
-        #    self.target_set_value("offset", self.init_value)
 
     def modal(self, context, event, tweak):
         return {'RUNNING_MODAL'}
@@ -84,6 +90,8 @@ class GrouzMo(GizmoGroup):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'WINDOW'
     bl_options = {'3D', 'PERSISTENT'}
+
+    sel_color = 0.25, 0.25, 0.5
 
     @classmethod
     def poll(cls, context):
@@ -101,3 +109,13 @@ class GrouzMo(GizmoGroup):
         mpr.alpha_highlight = 0.25
 
         mpr.use_draw_modal = True
+
+    def refresh(self, context):
+        sel_names = [bone.name for bone in context.selected_pose_bones]
+        for gizmo in self.gizmos:
+            if gizmo.bone_name in sel_names:
+                gizmo.color = self.sel_color
+                gizmo.alpha = 0.5
+            else:
+                gizmo.reset_color()
+
