@@ -145,7 +145,7 @@ class BonezMo(BazeMo):
             self.custom_shape = self.new_custom_shape('TRIS', Quad2D(scale=0.25).vertices)
 
         mat = Matrix((
-            (1.0, 0.0, 0.0, 1.0),
+            (1.0, 0.0, 0.0, 0.0),
             (0.0, 0.0, 1.0, 0.0),
             (0.0, 1.0, 0.0, 0.0),
             (0.0, 0.0, 0.0, 1.0)
@@ -181,11 +181,17 @@ class BonezMo(BazeMo):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
-        delta_y = (event.mouse_y - self._init_mouse_y) / 10000.0
-        delta_x = (event.mouse_x - self._init_mouse_x) / 10000.0
+        delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
+        delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
 
-        self.matrix_offset[0][3] += delta_x
-        self.matrix_offset[1][3] += delta_y
+        move_mode = event.alt
+        scale_mode = event.shift
+
+        if move_mode:
+            self.matrix_offset[0][3] += delta_x
+            self.matrix_offset[1][3] += delta_y
+        if scale_mode:
+            self.scale_basis += delta_x
 
         return {'RUNNING_MODAL'}
 
@@ -217,6 +223,12 @@ class GrouzMo(GizmoGroup):
         mpr.alpha_highlight = 0.25
 
         mpr.use_draw_modal = True
+
+    def draw_prepare(self, context):
+        view_matrix = context.area.spaces.active.region_3d.view_matrix.inverted().normalized()
+        for gizmo in self.gizmos:
+            view_matrix.translation = gizmo.matrix_basis.translation
+            gizmo.matrix_basis = view_matrix
 
     def refresh(self, context):
         sel_names = [bone.name for bone in context.selected_pose_bones]
