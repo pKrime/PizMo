@@ -6,61 +6,7 @@ from bpy.types import (
 )
 
 from mathutils import Matrix
-from copy import copy, deepcopy
-
-# Coordinates (each one is a triangle).
-
-
-class BasicShape:
-    vertices = []
-
-    def __init__(self, scale=1.0):
-        # make vertices unique to instance
-        self.vertices = deepcopy(self.vertices)
-        self.scale(scale)
-
-    def scale(self, factor):
-        for verts in self.vertices:
-            for i, co in enumerate(verts):
-                verts[i] = co * factor
-
-
-class Tris2D(BasicShape):
-    vertices = [
-        [0.0, 0.0],
-        [0.0, 1.0],
-        [1.0, 1.0],
-    ]
-
-
-class Quad2D(BasicShape):
-    vertices = deepcopy(Tris2D.vertices) + [deepcopy(Tris2D.vertices[-1]),
-                                            [deepcopy(Tris2D.vertices[-1][0]), deepcopy(Tris2D.vertices[0][1])],
-                                            deepcopy(Tris2D.vertices[0])]
-
-
-class Rect2D:
-    vertices = [
-        [-0.5, -1.0],
-        [-0.5, 1.0],
-        [0.5, 1.0],
-
-        [0.5, 1.0],
-        [0.5, -1.0],
-        [-0.5, -1.0],
-    ]
-
-
-class Cross2D:
-    vertices = deepcopy(Rect2D.vertices) + [
-        [-1.0, -0.5],
-        [-1.0, 0.5],
-        [1.0, 0.5],
-
-        [1.0, 0.5],
-        [1.0, -0.5],
-        [-1.0, -0.5],
-    ]
+from .shapes import Quad2D, Cross2D
 
 
 class BazeMo(Gizmo):
@@ -85,9 +31,6 @@ class AddzMo(BazeMo):
 
     def draw_select(self, context, select_id):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
-
-    def select_refresh(self):
-        print("sel refresh")
 
     def setup(self):
         self.base_color = 0.25, 0.5, 0.5
