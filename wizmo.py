@@ -66,10 +66,6 @@ class Cross2D:
 class BazeMo(Gizmo):
     base_color = 0.3, 0.6, 0.7
 
-    __slots__ = (
-        "custom_shape",
-    )
-
     def reset_color(self):
         self.color = self.base_color
         self.alpha = 0.25
@@ -77,6 +73,12 @@ class BazeMo(Gizmo):
 
 class AddzMo(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_add"
+
+    __slots__ = (
+        "custom_shape",
+        "_init_mouse_x",
+        "_init_mouse_y",
+    )
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -95,24 +97,39 @@ class AddzMo(BazeMo):
             self.custom_shape = self.new_custom_shape('TRIS', Cross2D.vertices)
 
         mat = Matrix((
-            (1.0, 0.0, 0.0, 1.0),
+            (1.0, 0.0, 0.0, 0.0),
             (0.0, 0.0, 1.0, 0.0),
             (0.0, 1.0, 0.0, 0.0),
             (0.0, 0.0, 0.0, 1.0)
         ))
 
         self.matrix_basis = mat
+        self.matrix_offset[0][3] = 1.0
+
         self.scale_basis = 0.25
+        self.use_draw_modal = True
 
     def invoke(self, context, event):
-        mpr = self.group.gizmos.new(BonezMo.bl_idname)
-        mpr.set_bone(context.active_pose_bone)
+        if event.alt:
+            self._init_mouse_x = event.mouse_x
+            self._init_mouse_y = event.mouse_y
+        for bone in context.selected_pose_bones:
+            if bone.name not in self.group.bone_names:
+                mpr = self.group.gizmos.new(BonezMo.bl_idname)
+                mpr.set_bone(bone)
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
+        delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
+        delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
+
+        self.group.draw_offset[0] += delta_x
+        self.group.draw_offset[1] += delta_y
+
+        self.group.refresh(context)
         return {'RUNNING_MODAL'}
 
 
@@ -145,9 +162,9 @@ class BonezMo(BazeMo):
             self.custom_shape = self.new_custom_shape('TRIS', Quad2D(scale=0.25).vertices)
 
         mat = Matrix((
-            (1.0, 0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0, self.group.draw_offset[0]),
             (0.0, 0.0, 1.0, 0.0),
-            (0.0, 1.0, 0.0, 0.0),
+            (0.0, 1.0, 0.0, self.group.draw_offset[1]),
             (0.0, 0.0, 0.0, 1.0)
         ))
 
@@ -204,6 +221,7 @@ class GrouzMo(GizmoGroup):
     bl_options = {'3D', 'PERSISTENT'}
 
     sel_color = 0.25, 0.25, 0.5
+    draw_offset = [2.0, 2.0]
 
     @classmethod
     def poll(cls, context):
@@ -211,6 +229,10 @@ class GrouzMo(GizmoGroup):
         if ob and ob.type == 'ARMATURE':
             return ob.mode == 'POSE'
         return False
+
+    @property
+    def bone_names(self):
+        return [gizmo.bone_name for gizmo in self.gizmos if hasattr(gizmo, 'bone_name')]
 
     def setup(self, context):
         # Assign the 'offset' target property to the light energy.
@@ -225,7 +247,9 @@ class GrouzMo(GizmoGroup):
         mpr.use_draw_modal = True
 
     def draw_prepare(self, context):
+
         view_matrix = context.area.spaces.active.region_3d.view_matrix.inverted().normalized()
+
         for gizmo in self.gizmos:
             view_matrix.translation = gizmo.matrix_basis.translation
             gizmo.matrix_basis = view_matrix
@@ -233,6 +257,9 @@ class GrouzMo(GizmoGroup):
     def refresh(self, context):
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
+            gizmo.matrix_basis[0][3] = self.draw_offset[0]
+            gizmo.matrix_basis[2][3] = self.draw_offset[1]
+
             try:
                 bone_name = gizmo.bone_name
             except AttributeError:
