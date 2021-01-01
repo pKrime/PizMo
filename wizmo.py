@@ -5,7 +5,6 @@ from bpy.types import (
     GizmoGroup,
 )
 
-from mathutils import Matrix
 from .shapes import Quad2D, Cross2D
 
 
@@ -41,6 +40,7 @@ class AddzMo(BazeMo):
 
         self.scale_basis = 0.25
         self.use_draw_modal = True
+        self.use_draw_offset_scale = True
 
     def invoke(self, context, event):
         self._init_mouse_x = event.mouse_x
@@ -59,8 +59,9 @@ class AddzMo(BazeMo):
         delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
         delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
 
-        self.group.draw_offset[0] += delta_x
-        self.group.draw_offset[1] += delta_y
+        for gizmo in self.group.gizmos:
+            gizmo.matrix_offset[0][3] += delta_x
+            gizmo.matrix_offset[2][3] += delta_y
 
         self.group.refresh(context)
         return {'RUNNING_MODAL'}
@@ -94,11 +95,6 @@ class BonezMo(BazeMo):
         if not hasattr(self, "custom_shape"):
             self.custom_shape = self.new_custom_shape('TRIS', Quad2D(scale=0.25).vertices)
 
-        mat = Matrix()
-        mat[0][3] = self.group.draw_offset[0]
-        mat[2][3] = self.group.draw_offset[1]
-
-        self.matrix_basis = mat
         self.use_draw_modal = True
         self.use_draw_scale = True
         self.use_draw_offset_scale = True
@@ -115,7 +111,8 @@ class BonezMo(BazeMo):
         self._init_mouse_y = event.mouse_y
         self._init_mouse_x = event.mouse_x
 
-        bpy.ops.pose.select_all(action='DESELECT')
+        if not event.shift:
+            bpy.ops.pose.select_all(action='DESELECT')
 
         try:
             bone = context.object.data.bones[self.bone_name]
@@ -153,7 +150,7 @@ class GrouzMo(GizmoGroup):
     bl_options = {'3D', 'PERSISTENT'}
 
     sel_color = 0.25, 0.25, 0.5
-    draw_offset = [2.0, 2.0]
+    draw_offset = [0.0, 0.0]
 
     @classmethod
     def poll(cls, context):
@@ -185,8 +182,6 @@ class GrouzMo(GizmoGroup):
     def refresh(self, context):
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
-            gizmo.matrix_basis[0][3] = self.draw_offset[0]
-            gizmo.matrix_basis[2][3] = self.draw_offset[1]
 
             try:
                 bone_name = gizmo.bone_name
