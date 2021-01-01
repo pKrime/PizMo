@@ -5,6 +5,11 @@ from bpy.types import (
     GizmoGroup,
 )
 
+from . import shapes
+
+from importlib import reload
+reload(shapes)
+
 from .shapes import Quad2D, Cross2D
 
 
@@ -85,9 +90,6 @@ class BonezMo(BazeMo):
 
     def draw_select(self, context, select_id):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
-
-    def select_refresh(self):
-        print("sel refresh")
 
     def setup(self):
         self.reset_color()
