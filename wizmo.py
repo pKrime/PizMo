@@ -20,6 +20,9 @@ class BazeMo(Gizmo):
         self.color = self.base_color
         self.alpha = 0.25
 
+        self.color_highlight = 0.75, 0.5, 0.5
+        self.alpha_highlight = 0.25
+
 
 class AddzMo(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_add"
@@ -167,10 +170,6 @@ class GrouzMo(GizmoGroup):
 
     def setup(self, context):
         mpr = self.gizmos.new(AddzMo.bl_idname)
-
-        mpr.color_highlight = 0.75, 0.75, 1.0
-        mpr.alpha_highlight = 0.25
-
         mpr.use_draw_modal = True
 
     def draw_prepare(self, context):
