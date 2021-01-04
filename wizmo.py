@@ -6,12 +6,14 @@ from bpy.types import (
 )
 
 from . import shapes
+from . import storage
 
 from importlib import reload
 reload(shapes)
+reload(storage)
 
 from .shapes import Quad2D, Cross2D
-
+#from .storage import Storage
 
 class BazeMo(Gizmo):
     base_color = 0.3, 0.6, 0.7
@@ -181,6 +183,13 @@ class GrouzMo(GizmoGroup):
             gizmo.matrix_space = view_matrix
 
     def refresh(self, context):
+        bone_names = storage.Storage().bones()
+        print("bone_names:", bone_names)
+        for bone_name in bone_names:
+            if bone_name not in self.bone_names:
+                mpr = self.gizmos.new(BonezMo.bl_idname)
+                mpr.set_bone(context.object.pose.bones[bone_name])
+
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
 
