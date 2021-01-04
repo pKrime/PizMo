@@ -7,13 +7,16 @@ from bpy.types import (
 
 from . import shapes
 from . import storage
+from . import enum_types
 
 from importlib import reload
 reload(shapes)
 reload(storage)
+reload(enum_types)
+
 
 from .shapes import Quad2D, Cross2D
-#from .storage import Storage
+from .enum_types import WidgetType, ShapeType
 
 class BazeMo(Gizmo):
     base_color = 0.3, 0.6, 0.7
@@ -99,20 +102,19 @@ class BonezMo(BazeMo):
     def setup(self):
         self.reset_color()
 
-        if not hasattr(self, "custom_shape"):
-            self.custom_shape = self.new_custom_shape('TRIS', Quad2D(scale=0.25).vertices)
-
         self.use_draw_modal = True
         self.use_draw_scale = True
         self.use_draw_offset_scale = True
 
+    def set_custom_shape(self, vertices):
+        self.custom_shape = self.new_custom_shape('TRIS', vertices)
+
     def set_bone(self, bone):
         self.bone_name = bone.name
 
-        position = bone.head
-
-        self.matrix_offset[0][3] = position.x + 2
-        self.matrix_offset[1][3] = position.z
+    def set_position(self, x, y):
+        self.matrix_offset[0][3] = x
+        self.matrix_offset[1][3] = y
 
     def invoke(self, context, event):
         self._init_mouse_y = event.mouse_y
@@ -182,13 +184,25 @@ class GrouzMo(GizmoGroup):
         for gizmo in self.gizmos:
             gizmo.matrix_space = view_matrix
 
-    def refresh(self, context):
-        bone_names = storage.Storage().bones()
-        print("bone_names:", bone_names)
-        for bone_name in bone_names:
-            if bone_name not in self.bone_names:
+    def import_storage(self, context, clear_storage=True):
+        store = storage.Storage()
+
+        for widget in store.widgets():
+            if widget.type == WidgetType.BONE:
                 mpr = self.gizmos.new(BonezMo.bl_idname)
-                mpr.set_bone(context.object.pose.bones[bone_name])
+
+                bone_name = widget.data['bone_name']
+                if bone_name not in self.bone_names:
+                    mpr.set_bone(context.object.pose.bones[bone_name])
+                if widget.shape == ShapeType.VERTICES:
+                    mpr.set_custom_shape(widget.data['vertices'])
+                mpr.set_position(widget.position[0], widget.position[1])
+
+        if clear_storage:
+            store.clear()
+
+    def refresh(self, context):
+        self.import_storage(context)
 
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
