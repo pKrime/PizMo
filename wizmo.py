@@ -188,14 +188,18 @@ class GrouzMo(GizmoGroup):
         store = storage.Storage()
 
         for widget in store.widgets():
+            mpr = None
             if widget.type == WidgetType.BONE:
-                mpr = self.gizmos.new(BonezMo.bl_idname)
-
                 bone_name = widget.data['bone_name']
                 if bone_name not in self.bone_names:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
                     mpr.set_bone(context.object.pose.bones[bone_name])
+            if mpr:
                 if widget.shape == ShapeType.VERTICES:
                     mpr.set_custom_shape(widget.data['vertices'])
+                elif widget.shape == ShapeType.MESH:
+                    raise NotImplementedError
+
                 mpr.set_position(widget.position[0], widget.position[1])
 
         if clear_storage:
