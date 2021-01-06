@@ -4,7 +4,7 @@ import PizMo
 from PizMo import storage, shapes, enum_types
 from PizMo.storage import Stock
 from PizMo.shapes import Quad2D
-from PizMo.shapes import MeshShape
+from PizMo.shapes import MeshShape2D
 from PizMo.enum_types import ShapeType, WidgetType
 
 
@@ -12,13 +12,12 @@ def create_picker(bone_widgets):
     store = storage.Storage()
     
     for bone_name, wdg_mesh_name in bone_widgets.items():
-        print('bone:', bone_name, 'mesh', wdg_mesh_name)
         wdg = Stock(widget_type=WidgetType.BONE,
                     shape_type=ShapeType.VERTICES,
                     position=(0.0, 0.0),
                     data=dict(bone_name=bone_name,
-                              vertices=MeshShape(bpy.data.meshes[wdg_mesh_name],
-                                                 scale=2.0).vertices,))
+                              vertices=MeshShape2D(bpy.data.meshes[wdg_mesh_name],
+                                                   scale=2.0).vertices,))
 
         store.add_widget(wdg)
 
@@ -41,8 +40,8 @@ if __name__ == "__main__":
         'fk-arm.001.L': 'WDG-arm.L',
         'fk-arm.002.L': 'WDG-forearm.L',
         'fk-arm.004.L': 'WDG-hand.L',
-        'fk-arm.001.R': 'WDG-forearm.R',
-        'fk-arm.002.R': 'WDG-arm.R',
+        'fk-arm.001.R': 'WDG-arm.R',
+        'fk-arm.002.R': 'WDG-forearm.R',
         'fk-arm.004.R': 'WDG-hand.R'
     }
 

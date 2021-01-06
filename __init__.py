@@ -34,7 +34,7 @@ from importlib import reload
 reload(wizmo)
 
 from .wizmo import AddzMo
-from .wizmo import BonezMo
+from .wizmo import BonezMo, BonezMo3D
 from .wizmo import GrouzMo
 
 
@@ -44,10 +44,12 @@ from .wizmo import GrouzMo
 def register():
     bpy.utils.register_class(AddzMo)
     bpy.utils.register_class(BonezMo)
+    bpy.utils.register_class(BonezMo3D)
     bpy.utils.register_class(GrouzMo)
 
 
 def unregister():
     bpy.utils.unregister_class(GrouzMo)
     bpy.utils.unregister_class(BonezMo)
+    bpy.utils.unregister_class(BonezMo3D)
     bpy.utils.unregister_class(AddzMo)
