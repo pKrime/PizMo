@@ -215,6 +215,7 @@ class BonezMo3D(BazeMo):
             pass
         else:
             bone.select = True
+            self.hide_select = True
 
         return {'RUNNING_MODAL'}
 
@@ -321,7 +322,7 @@ class GrouzMo(GizmoGroup):
                 gizmo.alpha = 0.5
             else:
                 gizmo.reset_color()
-
+                gizmo.hide_select = False
             try:
                 gizmo.refresh_shape()
             except AttributeError:
