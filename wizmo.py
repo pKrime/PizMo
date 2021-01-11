@@ -237,6 +237,21 @@ class BonezMo3D(BazeMo):
         return {'RUNNING_MODAL'}
 
 
+class GrouzMo2D(GizmoGroup):
+    def __init__(self):
+        raise NotImplementedError
+
+    def draw_prepare(self, context):
+        """align gizmos with view"""
+        view_matrix = context.area.spaces.active.region_3d.view_matrix.normalized()
+        # view_matrix.translation = context.area.spaces.active.region_3d.view_location
+        giz_matrix = Matrix()
+        giz_matrix.translation = Vector([1/context.area.spaces.active.region_3d.view_distance, 0, 0]) @ view_matrix# @ context.area.spaces.active.region_3d.window_matrix
+
+        for gizmo in self.gizmos:
+            gizmo.matrix_space = giz_matrix
+
+
 class GrouzMo(GizmoGroup):
     bl_idname = "OBJECT_GGT_pizmo_armature"
     bl_label = "Test Light Widget"
@@ -261,16 +276,6 @@ class GrouzMo(GizmoGroup):
     def setup(self, context):
         mpr = self.gizmos.new(AddzMo.bl_idname)
         mpr.use_draw_modal = True
-
-    # def draw_prepare(self, context):
-    #     """align gizmos with view"""
-    #     view_matrix = context.area.spaces.active.region_3d.view_matrix.normalized()
-    #     # view_matrix.translation = context.area.spaces.active.region_3d.view_location
-    #     giz_matrix = Matrix()
-    #     giz_matrix.translation = Vector([1/context.area.spaces.active.region_3d.view_distance, 0, 0]) @ view_matrix# @ context.area.spaces.active.region_3d.window_matrix
-    #
-    #     for gizmo in self.gizmos:
-    #         gizmo.matrix_space = giz_matrix
 
     def import_storage(self, context, clear_storage=True):
         store = storage.Storage()
