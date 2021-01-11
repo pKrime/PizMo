@@ -186,12 +186,13 @@ class BonezMo3D(BazeMo):
             return
 
         vertices = MeshShape3D(self._obj,
-                               scale=1.1).vertices
+                               scale=1.1, vertex_group=self._v_grp).vertices
 
         self.custom_shape = self.new_custom_shape('TRIS', vertices)
 
-    def set_object(self, obj):
+    def set_object(self, obj, v_grp=None):
         self._obj = obj
+        self._v_grp = v_grp
         self.refresh_shape()
 
     def set_bone(self, bone):
@@ -284,7 +285,12 @@ class GrouzMo(GizmoGroup):
                 if widget.shape == ShapeType.MESH3D:
                     print("using bonezmo3d")
                     mpr = self.gizmos.new(BonezMo3D.bl_idname)
-                    mpr.set_object(widget.data['object'])
+                    try:
+                        v_grp = widget.data['vertex_group']
+                    except KeyError:
+                        mpr.set_object(widget.data['object'])
+                    else:
+                        mpr.set_object(widget.data['object'], v_grp=v_grp)
                 else:
                     mpr = self.gizmos.new(BonezMo.bl_idname)
 
