@@ -287,9 +287,8 @@ class GrouzMo(GizmoGroup):
                 bone_name = widget.data['bone_name']
                 if bone_name in self.bone_names:
                     continue
-                print("shape is", widget.shape)
+
                 if widget.shape == ShapeType.MESH3D:
-                    print("using bonezmo3d")
                     mpr = self.gizmos.new(BonezMo3D.bl_idname)
                     try:
                         v_grp = widget.data['vertex_group']
