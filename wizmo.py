@@ -184,9 +184,15 @@ class BonezMo3D(BazeMo):
     def refresh_shape(self):
         if not self._obj:
             return
+        # TODO: document keywords
+
+        if '{side}' in self._v_grp:
+            v_grps = [self._v_grp.replace('{side}', 'L'), self._v_grp.replace('{side}', 'R')]
+        else:
+            v_grps = [self._v_grp]
 
         vertices = MeshShape3D(self._obj,
-                               scale=1.1, vertex_group=self._v_grp).vertices
+                               scale=1.1, vertex_groups=v_grps).vertices
 
         self.custom_shape = self.new_custom_shape('TRIS', vertices)
 

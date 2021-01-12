@@ -59,11 +59,11 @@ class Cross2D(BasicShape):
 
 
 class MeshShape3D(BasicShape):
-    def __init__(self, mesh, scale=1.0, vertex_group=None):
+    def __init__(self, mesh, scale=1.0, vertex_groups=None):
         super().__init__(scale)
-        self.tris_from_mesh(mesh, scale=scale, vertex_group=vertex_group)
+        self.tris_from_mesh(mesh, scale=scale, vertex_groups=vertex_groups)
 
-    def tris_from_mesh(self, obj, scale=1.0, matrix=None, vertex_group=None):
+    def tris_from_mesh(self, obj, scale=1.0, matrix=None, vertex_groups=[]):
         dg = bpy.context.evaluated_depsgraph_get()  # getting the dependency graph
 
         # This has to be done every time the object updates:
@@ -72,14 +72,14 @@ class MeshShape3D(BasicShape):
 
         mesh.calc_loop_triangles()
 
-        if vertex_group:
+        if vertex_groups:
             vertices = []
             indices = []
-            group_idx = obj.vertex_groups[vertex_group].index
+            group_idx = list([obj.vertex_groups[vertex_group].index for vertex_group in vertex_groups])
             for tris in mesh.loop_triangles:
                 has_group = True
                 for i in tris.vertices:
-                    if not any(g.group == group_idx for g in mesh.vertices[i].groups):
+                    if not any(g.group in group_idx for g in mesh.vertices[i].groups):
                         has_group = False
                         break
                 if has_group:
@@ -109,7 +109,7 @@ class MeshShape3D(BasicShape):
         vertices *= scale
         vertices += average
 
-        if vertex_group:
+        if vertex_groups:
             self.vertices = vertices.tolist()
         else:
             self.vertices = [vertices[i] for i in np.concatenate(indices)]
