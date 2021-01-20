@@ -63,7 +63,8 @@ class MeshShape3D(BasicShape):
     def __init__(self, mesh, scale=1.0, vertex_groups=None):
         self._indices = []
         self._obj = None
-        self.tris_from_mesh(mesh, scale=scale, vertex_groups=vertex_groups)
+        self.scale_factor = scale
+        self.tris_from_mesh(mesh, vertex_groups=vertex_groups)
 
     @property
     def vertices(self):
@@ -72,25 +73,23 @@ class MeshShape3D(BasicShape):
 
         dg = bpy.context.evaluated_depsgraph_get()
         ob = self._obj.evaluated_get(dg)
-        mesh = ob.to_mesh()  # turn it into the mesh data block we want.
+        mesh = ob.to_mesh()
         mesh.calc_loop_triangles()
 
-        # # scale
-        # average = np.average(vertices, axis=0)
-        #
-        # vertices -= average
-        # vertices *= scale
-        # vertices += average
+        verts = np.array([mesh.vertices[i].co for i in self._indices], 'f')
 
-        return [mesh.vertices[i].co for i in self._indices]
+        # scale
+        average = np.average(verts, axis=0)
+        verts -= average
+        verts *= self.scale_factor
+        verts += average
 
-    def tris_from_mesh(self, obj, scale=1.0, matrix=None, vertex_groups=[]):
+        return verts
+
+    def tris_from_mesh(self, obj, vertex_groups=[]):
         self._obj = obj
 
-        # update vertices
-        dg = bpy.context.evaluated_depsgraph_get()  # getting the dependency graph
-        ob = obj.evaluated_get(dg)  # this gives us the evaluated version of the object. Aka with all modifiers and deformations applied.
-        mesh = ob.to_mesh()  # turn it into the mesh data block we want.
+        mesh = self._obj.data
         mesh.calc_loop_triangles()
 
         if vertex_groups:
