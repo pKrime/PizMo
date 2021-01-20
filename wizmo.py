@@ -162,7 +162,7 @@ class BonezMo3D(BazeMo):
         "bone_name",
         "_init_mouse_x",
         "_init_mouse_y",
-        "_obj"
+        "_meshshape",
     )
 
     def _update_offset_matrix(self):
@@ -182,23 +182,18 @@ class BonezMo3D(BazeMo):
         self.use_draw_offset_scale = False
 
     def refresh_shape(self):
-        if not self._obj:
+        if not self._meshshape:
             return
-        # TODO: document keywords
 
-        if '{side}' in self._v_grp:
-            v_grps = [self._v_grp.replace('{side}', 'L'), self._v_grp.replace('{side}', 'R')]
-        else:
-            v_grps = [self._v_grp]
-
-        vertices = MeshShape3D(self._obj,
-                               scale=1.1, vertex_groups=v_grps).vertices
-
-        self.custom_shape = self.new_custom_shape('TRIS', vertices)
+        self.custom_shape = self.new_custom_shape('TRIS', self._meshshape.vertices)
 
     def set_object(self, obj, v_grp=None):
-        self._obj = obj
-        self._v_grp = v_grp
+        if '{side}' in v_grp:
+            v_grps = [v_grp.replace('{side}', 'L'), v_grp.replace('{side}', 'R')]
+        else:
+            v_grps = [v_grp]
+
+        self._meshshape = MeshShape3D(obj, scale=1.1, vertex_groups=v_grps)
         self.refresh_shape()
 
     def set_bone(self, bone):

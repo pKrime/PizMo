@@ -59,21 +59,41 @@ class Cross2D(BasicShape):
 
 
 class MeshShape3D(BasicShape):
+
     def __init__(self, mesh, scale=1.0, vertex_groups=None):
-        super().__init__(scale)
+        self._indices = []
+        self._obj = None
         self.tris_from_mesh(mesh, scale=scale, vertex_groups=vertex_groups)
 
-    def tris_from_mesh(self, obj, scale=1.0, matrix=None, vertex_groups=[]):
-        dg = bpy.context.evaluated_depsgraph_get()  # getting the dependency graph
+    @property
+    def vertices(self):
+        if not self._obj:
+            return []
 
-        # This has to be done every time the object updates:
+        dg = bpy.context.evaluated_depsgraph_get()
+        ob = self._obj.evaluated_get(dg)
+        mesh = ob.to_mesh()  # turn it into the mesh data block we want.
+        mesh.calc_loop_triangles()
+
+        # # scale
+        # average = np.average(vertices, axis=0)
+        #
+        # vertices -= average
+        # vertices *= scale
+        # vertices += average
+
+        return [mesh.vertices[i].co for i in self._indices]
+
+    def tris_from_mesh(self, obj, scale=1.0, matrix=None, vertex_groups=[]):
+        self._obj = obj
+
+        # update vertices
+        dg = bpy.context.evaluated_depsgraph_get()  # getting the dependency graph
         ob = obj.evaluated_get(dg)  # this gives us the evaluated version of the object. Aka with all modifiers and deformations applied.
         mesh = ob.to_mesh()  # turn it into the mesh data block we want.
-
         mesh.calc_loop_triangles()
 
         if vertex_groups:
-            vertices = []
             indices = []
             group_idx = list([obj.vertex_groups[vertex_group].index for vertex_group in vertex_groups])
             for tris in mesh.loop_triangles:
@@ -84,35 +104,15 @@ class MeshShape3D(BasicShape):
                         break
                 if has_group:
                     for v in tris.vertices:
-                        vertices.append(mesh.vertices[v].co)
-            vertices = np.array(vertices)
-        else:
-            vertices = np.empty((len(mesh.vertices), 3), 'f')
-            mesh.vertices.foreach_get(
-                "co", np.reshape(vertices, len(mesh.vertices) * 3))
+                        indices.append(v)
 
+            self._indices = indices
+        else:
             indices = np.empty((len(mesh.loop_triangles), 3), 'i')
             mesh.loop_triangles.foreach_get(
                 "vertices", np.reshape(indices, len(mesh.loop_triangles) * 3))
 
-        # if matrix:
-        #     # we invert the matrix as we are facing the object
-        #     np_mat = np.array(matrix.normalized().inverted().to_3x3())
-        #     vertices *= matrix.to_scale()
-        #     np.copyto(vertices, vertices @ np_mat)
-        #     vertices += matrix.translation
-
-        # scale
-        average = np.average(vertices, axis=0)
-
-        vertices -= average
-        vertices *= scale
-        vertices += average
-
-        if vertex_groups:
-            self.vertices = vertices.tolist()
-        else:
-            self.vertices = [vertices[i] for i in np.concatenate(indices)]
+            self._indices = np.concatenate(indices)
 
 
 class MeshShape2D(BasicShape):
