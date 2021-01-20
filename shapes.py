@@ -86,7 +86,7 @@ class MeshShape3D(BasicShape):
 
         return verts
 
-    def tris_from_mesh(self, obj, vertex_groups=[]):
+    def tris_from_mesh(self, obj, vertex_groups=[], weight_threshold=0.1):
         self._obj = obj
 
         mesh = self._obj.data
@@ -98,12 +98,11 @@ class MeshShape3D(BasicShape):
             for tris in mesh.loop_triangles:
                 has_group = True
                 for i in tris.vertices:
-                    if not any(g.group in group_idx for g in mesh.vertices[i].groups):
+                    if not any(g.weight > weight_threshold for g in mesh.vertices[i].groups if g.group in group_idx):
                         has_group = False
                         break
                 if has_group:
-                    for v in tris.vertices:
-                        indices.append(v)
+                    indices.extend(tris.vertices)
 
             self._indices = indices
         else:
