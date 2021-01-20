@@ -94,15 +94,12 @@ class MeshShape3D(BasicShape):
 
         if vertex_groups:
             indices = []
-            group_idx = list([obj.vertex_groups[vertex_group].index for vertex_group in vertex_groups])
+            group_idx = [obj.vertex_groups[vertex_group].index for vertex_group in vertex_groups]
             for tris in mesh.loop_triangles:
-                has_group = True
                 for i in tris.vertices:
-                    if not any(g.weight > weight_threshold for g in mesh.vertices[i].groups if g.group in group_idx):
-                        has_group = False
+                    if any(g.weight > weight_threshold for g in mesh.vertices[i].groups if g.group in group_idx):
+                        indices.extend(tris.vertices)
                         break
-                if has_group:
-                    indices.extend(tris.vertices)
 
             self._indices = indices
         else:
