@@ -92,16 +92,13 @@ class MeshShape3D(BasicShape):
         mesh = self._obj.data
         mesh.calc_loop_triangles()
 
+        self._indices = []
         if vertex_groups:
-            indices = []
             group_idx = [obj.vertex_groups[vertex_group].index for vertex_group in vertex_groups]
-            for tris in mesh.loop_triangles:
-                for i in tris.vertices:
-                    if any(g.weight > weight_threshold for g in mesh.vertices[i].groups if g.group in group_idx):
-                        indices.extend(tris.vertices)
-                        break
 
-            self._indices = indices
+            for tris in mesh.loop_triangles:
+                if all(any(g.weight > weight_threshold for g in mesh.vertices[i].groups if g.group in group_idx) for i in tris.vertices):
+                    self._indices.extend(tris.vertices)
         else:
             indices = np.empty((len(mesh.loop_triangles), 3), 'i')
             mesh.loop_triangles.foreach_get(
