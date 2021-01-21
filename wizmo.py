@@ -17,7 +17,7 @@ reload(storage)
 reload(enum_types)
 
 
-from .shapes import Quad2D, Cross2D, MeshShape3D
+from .shapes import Cross2D, MeshShape3D
 from .enum_types import WidgetType, ShapeType
 
 class BazeMo(Gizmo):
@@ -91,10 +91,12 @@ class BonezMo(BazeMo):
         "bone_name",
         "_init_mouse_x",
         "_init_mouse_y",
+        "bone_follow"
     )
 
-    def _update_offset_matrix(self):
-        pass
+    def refresh_shape(self, context):
+        if self.bone_follow:
+            self.matrix_space = context.object.pose.bones[self.bone_name].matrix
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -181,20 +183,23 @@ class BonezMo3D(BazeMo):
         self.use_draw_scale = False
         self.use_draw_offset_scale = False
 
-    def refresh_shape(self):
+    def refresh_shape(self, context):
         if not self._meshshape:
             return
 
         self.custom_shape = self.new_custom_shape('TRIS', self._meshshape.vertices)
 
     def set_object(self, obj, v_grp=None):
-        if '{side}' in v_grp:
-            v_grps = [v_grp.replace('{side}', 'L'), v_grp.replace('{side}', 'R')]
+        if v_grp:
+            if '{side}' in v_grp:
+                v_grps = [v_grp.replace('{side}', 'L'), v_grp.replace('{side}', 'R')]
+            else:
+                v_grps = [v_grp]
         else:
-            v_grps = [v_grp]
+            v_grps = []
 
         self._meshshape = MeshShape3D(obj, scale=1.1, vertex_groups=v_grps)
-        self.refresh_shape()
+        self.refresh_shape(None)
 
     def set_bone(self, bone):
         self.bone_name = bone.name
@@ -276,8 +281,7 @@ class GrouzMo(GizmoGroup):
         return [gizmo.bone_name for gizmo in self.gizmos if hasattr(gizmo, 'bone_name')]
 
     def setup(self, context):
-        mpr = self.gizmos.new(AddzMo.bl_idname)
-        mpr.use_draw_modal = True
+        pass
 
     def import_storage(self, context, clear_storage=True):
         store = storage.Storage()
@@ -291,12 +295,16 @@ class GrouzMo(GizmoGroup):
 
                 if widget.shape == ShapeType.MESH3D:
                     mpr = self.gizmos.new(BonezMo3D.bl_idname)
-                    try:
-                        v_grp = widget.data['vertex_group']
-                    except KeyError:
-                        mpr.set_object(widget.data['object'])
-                    else:
-                        mpr.set_object(widget.data['object'], v_grp=v_grp)
+                    v_grp = widget.data.get('vertex_group')
+                    mpr.set_object(widget.data['object'], v_grp=v_grp)
+                elif widget.shape == ShapeType.RECT:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr.set_custom_shape(shapes.Rect2D.vertices)
+                elif widget.shape == ShapeType.QUAD:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr.set_custom_shape(shapes.Quad2D.vertices)
+                    if widget.data.get('bone_follow'):
+                        mpr.bone_follow = True
                 else:
                     mpr = self.gizmos.new(BonezMo.bl_idname)
 
@@ -329,6 +337,6 @@ class GrouzMo(GizmoGroup):
                 gizmo.reset_color()
                 gizmo.hide_select = False
             try:
-                gizmo.refresh_shape()
+                gizmo.refresh_shape(context)
             except AttributeError:
                 pass

@@ -1,7 +1,10 @@
 import bpy
+import PizMo
 
-from PizMo import storage
+from PizMo import storage, shapes, enum_types
 from PizMo.storage import Stock
+from PizMo.shapes import Quad2D
+from PizMo.shapes import MeshShape3D
 from PizMo.enum_types import ShapeType, WidgetType
 
 
@@ -53,3 +56,12 @@ if __name__ == "__main__":
 
     for ctrl_name, vertex_group in controls.items():
         create_picker(store, tallest, ctrl_name, vertex_group)
+
+    wdg = Stock(
+        widget_type=WidgetType.BONE,
+        shape_type=ShapeType.QUAD,
+        position=(-0.5, -0.5),
+        data=dict(bone_name='root', bone_follow=True)
+    )
+
+    store.add_widget(wdg)

@@ -17,3 +17,6 @@ class ShapeType(Enum):
     VERTICES = 1
     MESH = 2
     MESH3D = 3
+    RECT = 4
+    CIRCLE = 5
+    QUAD = 6
