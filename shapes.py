@@ -61,7 +61,6 @@ class Quad2D(BasicShape):
             verts.append(inner.vertices[i + 2])
             verts.append(self.vertices[i + 2])
 
-        print("wire verts", verts)
         return verts
 
 

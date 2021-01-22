@@ -42,7 +42,7 @@ class ArmzMo(BazeMo):
     )
 
     def refresh_shape(self):
-        self.hide = self._object == bpy.context.object
+        self.hide = bpy.context.mode == 'POSE' and self._object == bpy.context.object
         if self.bone_name:
             self.matrix_space = self._object.pose.bones[self.bone_name].matrix
 
@@ -54,10 +54,11 @@ class ArmzMo(BazeMo):
 
     def invoke(self, context, event):
         if self._object:
+            bpy.ops.object.mode_set(mode='OBJECT')
             bpy.ops.object.select_all(action='DESELECT')
             self._object.select_set(True)
             bpy.context.view_layer.objects.active = self._object
-        bpy.ops.object.mode_set(mode='POSE')
+            bpy.ops.object.mode_set(mode='POSE')
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event, tweak):
@@ -248,7 +249,8 @@ class BonezMo3D(BazeMo):
             v_grps = []
 
         self._meshshape = MeshShape3D(obj, scale=1.1, vertex_groups=v_grps)
-        self.refresh_shape(None)
+        if len(self._meshshape.vertices) > 2:
+            self.refresh_shape(None)
 
     def set_bone(self, bone):
         self.bone_name = bone.name
@@ -318,6 +320,8 @@ class GrouzMo(GizmoGroup):
     sel_color = 0.3, 0.6, 0.7
     draw_offset = [0.0, 0.0]
 
+    _object = None
+
     @classmethod
     def poll(cls, context):
         ob = context.object
@@ -332,20 +336,37 @@ class GrouzMo(GizmoGroup):
     def setup(self, context):
         pass
 
-    def import_storage(self, context, clear_storage=True):
+    def tallest_rigged_mesh(self, context):
+        rigged_objs = list(
+            (ob for ob in bpy.data.objects if ob.type == 'MESH'
+             and next((mod for mod in ob.modifiers if mod.type == 'ARMATURE' and mod.object == context.object), None))
+        )
+
+        if not rigged_objs:
+            return
+
+        max_height = max(ob.dimensions[2] for ob in rigged_objs)
+        tallest = next(ob for ob in rigged_objs if ob.dimensions[2] == max_height)
+        return tallest
+
+    def import_storage(self, context, clear_storage=False):
         store = storage.Storage()
+        tallest = self.tallest_rigged_mesh(context)
 
         for widget in store.widgets():
             mpr = None
             if widget.type == WidgetType.BONE:
                 bone_name = widget.data['bone_name']
+                if bone_name not in context.object.pose.bones:
+                    continue
                 if bone_name in self.bone_names:
                     continue
 
                 if widget.shape == ShapeType.MESH3D:
                     mpr = self.gizmos.new(BonezMo3D.bl_idname)
                     v_grp = widget.data.get('vertex_group')
-                    mpr.set_object(widget.data['object'], v_grp=v_grp)
+                    mesh_obj = widget.data.get('object', tallest)
+                    mpr.set_object(mesh_obj, v_grp=v_grp)
                 elif widget.shape == ShapeType.RECT:
                     mpr = self.gizmos.new(BonezMo.bl_idname)
                     mpr.set_custom_shape(shapes.Rect2D.vertices)
@@ -372,12 +393,20 @@ class GrouzMo(GizmoGroup):
         if clear_storage:
             store.clear()
 
+    def clear(self):
+        for gizmo in reversed(self.gizmos):
+            self.gizmos.remove(gizmo)
+
     def refresh(self, context):
-        self.import_storage(context)
+        if context.object != self._object:
+            self.clear()
+
+        if not self.gizmos:
+            self.import_storage(context)
+            self._object = context.object
 
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
-
             try:
                 bone_name = gizmo.bone_name
             except AttributeError:
@@ -416,7 +445,6 @@ class GrouzMoRoots(GizmoGroup):
                 continue
             mpr = self.gizmos.new(ArmzMo.bl_idname)
             mpr.set_object(ob)
-
 
     def import_storage(self, context, clear_storage=True):
         store = storage.Storage()
