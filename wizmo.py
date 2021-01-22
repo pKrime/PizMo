@@ -32,6 +32,55 @@ class BazeMo(Gizmo):
         self.alpha_highlight = 0.25
 
 
+class ArmzMo(BazeMo):
+    bl_idname = "VIEW3D_GT_pizmo_root"
+
+    __slots__ = (
+        "_custom_shape",
+        "bone_name",
+        "_object"
+    )
+
+    def refresh_shape(self):
+        self.hide = self._object == bpy.context.object
+        if self.bone_name:
+            self.matrix_space = self._object.pose.bones[self.bone_name].matrix
+
+    def draw(self, context):
+        self.draw_custom_shape(self.custom_shape)
+
+    def draw_select(self, context, select_id):
+        self.draw_custom_shape(self.custom_shape, select_id=select_id)
+
+    def invoke(self, context, event):
+        if self._object:
+            bpy.ops.object.select_all(action='DESELECT')
+            self._object.select_set(True)
+            bpy.context.view_layer.objects.active = self._object
+        bpy.ops.object.mode_set(mode='POSE')
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event, tweak):
+        return {'FINISHED'}
+
+    def setup(self):
+        self.bone_name = ''
+        self.base_color = 0.25, 0.5, 0.5
+        self.reset_color()
+
+        if not hasattr(self, "custom_shape"):
+            self.custom_shape = self.new_custom_shape('TRIS', Cross2D.vertices)
+
+        self.use_draw_modal = True
+        self.use_draw_scale = False
+        self.use_draw_offset_scale = False
+
+    def set_object(self, obj):
+        self._object = obj
+        # TODO: pick lowest bone in separate func
+        self.bone_name = next((bone.name for bone in obj.pose.bones if not bone.parent), None)
+
+
 class AddzMo(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_add"
 
@@ -340,3 +389,69 @@ class GrouzMo(GizmoGroup):
                 gizmo.refresh_shape(context)
             except AttributeError:
                 pass
+
+
+class GrouzMoRoots(GizmoGroup):
+    bl_idname = "OBJECT_GGT_pizmo_roots"
+    bl_label = "Selects Armature"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'WINDOW'
+    bl_options = {'3D', 'PERSISTENT'}
+
+    sel_color = 0.3, 0.6, 0.7
+    draw_offset = [0.0, 0.0]
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def setup(self, context):
+        for ob in context.scene.objects:
+            if not ob.visible_get():
+                continue
+            if ob.type != 'ARMATURE':
+                continue
+            mpr = self.gizmos.new(ArmzMo.bl_idname)
+            mpr.set_object(ob)
+
+
+    def import_storage(self, context, clear_storage=True):
+        store = storage.Storage()
+
+        for widget in store.widgets():
+            mpr = None
+            if widget.type == WidgetType.BONE:
+                bone_name = widget.data['bone_name']
+                if bone_name in self.bone_names:
+                    continue
+
+                if widget.shape == ShapeType.MESH3D:
+                    mpr = self.gizmos.new(BonezMo3D.bl_idname)
+                    v_grp = widget.data.get('vertex_group')
+                    mpr.set_object(widget.data['object'], v_grp=v_grp)
+                elif widget.shape == ShapeType.RECT:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr.set_custom_shape(shapes.Rect2D.vertices)
+                elif widget.shape == ShapeType.QUAD:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr.set_custom_shape(shapes.Quad2D.vertices)
+                    if widget.data.get('bone_follow'):
+                        mpr.bone_follow = True
+                else:
+                    mpr = self.gizmos.new(BonezMo.bl_idname)
+
+                mpr.set_bone(context.object.pose.bones[bone_name])
+            if mpr:
+                if widget.shape == ShapeType.VERTICES:
+                    mpr.set_custom_shape(widget.data['vertices'])
+                elif widget.shape == ShapeType.MESH:
+                    raise NotImplementedError
+
+                mpr.set_position(widget.position[0], widget.position[1])
+
+        if clear_storage:
+            store.clear()
+
+    def refresh(self, context):
+        for gizmo in self.gizmos:
+            gizmo.refresh_shape()

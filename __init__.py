@@ -34,22 +34,26 @@ from importlib import reload
 reload(wizmo)
 
 from .wizmo import AddzMo
-from .wizmo import BonezMo, BonezMo3D
-from .wizmo import GrouzMo
+from .wizmo import BonezMo, BonezMo3D, ArmzMo
+from .wizmo import GrouzMo, GrouzMoRoots
 
 
 # REGISTER #
 
 
 def register():
+    bpy.utils.register_class(ArmzMo)
     bpy.utils.register_class(AddzMo)
     bpy.utils.register_class(BonezMo)
     bpy.utils.register_class(BonezMo3D)
     bpy.utils.register_class(GrouzMo)
+    bpy.utils.register_class(GrouzMoRoots)
 
 
 def unregister():
+    bpy.utils.unregister_class(GrouzMoRoots)
     bpy.utils.unregister_class(GrouzMo)
     bpy.utils.unregister_class(BonezMo)
     bpy.utils.unregister_class(BonezMo3D)
     bpy.utils.unregister_class(AddzMo)
+    bpy.utils.unregister_class(ArmzMo)
