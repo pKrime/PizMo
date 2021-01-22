@@ -38,7 +38,7 @@ class Quad2D(BasicShape):
                                             [Tris2D.vertices[-1][0], Tris2D.vertices[0][1]],
                                             deepcopy(Tris2D.vertices[0])]
 
-    def wire_vertices(self, thickness=0.25):
+    def frame_vertices(self, thickness=0.25):
         offset = thickness
         offset /= 2
         inner = Quad2D(scale=1 - thickness, offset=(offset, offset))
