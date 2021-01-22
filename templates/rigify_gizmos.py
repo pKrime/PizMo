@@ -61,7 +61,7 @@ if __name__ == "__main__":
         widget_type=WidgetType.BONE,
         shape_type=ShapeType.QUAD,
         position=(-0.5, -0.5),
-        data=dict(bone_name='root', bone_follow=True)
+        data=dict(bone_name='root', bone_follow=True, frame=True)
     )
 
     store.add_widget(wdg)

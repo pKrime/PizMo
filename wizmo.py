@@ -406,7 +406,7 @@ class GrouzMoRoots(GizmoGroup):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return context.mode in ('OBJECT', 'POSE')
 
     def setup(self, context):
         for ob in context.scene.objects:
