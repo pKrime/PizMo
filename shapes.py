@@ -8,15 +8,21 @@ from .enum_types import Axis
 class BasicShape:
     vertices = []
 
-    def __init__(self, scale=1.0):
+    def __init__(self, scale=1.0, offset=(0.0, 0.0)):
         # make vertices unique to instance
         self.vertices = deepcopy(self.vertices)
         self.scale(scale)
+        self.offset(offset)
 
     def scale(self, factor):
         for verts in self.vertices:
             for i, co in enumerate(verts):
                 verts[i] = co * factor
+
+    def offset(self, offset):
+        for verts in self.vertices:
+            for i, co in enumerate(verts):
+                verts[i] = co + offset[i]
 
 
 class Tris2D(BasicShape):
@@ -29,8 +35,34 @@ class Tris2D(BasicShape):
 
 class Quad2D(BasicShape):
     vertices = deepcopy(Tris2D.vertices) + [deepcopy(Tris2D.vertices[-1]),
-                                            [deepcopy(Tris2D.vertices[-1][0]), deepcopy(Tris2D.vertices[0][1])],
+                                            [Tris2D.vertices[-1][0], Tris2D.vertices[0][1]],
                                             deepcopy(Tris2D.vertices[0])]
+
+    def wire_vertices(self, thickness=0.25):
+        offset = thickness
+        offset /= 2
+        inner = Quad2D(scale=1 - thickness, offset=(offset, offset))
+
+        verts = []
+        for i in range(0, 4, 3):
+            verts.append(self.vertices[i])
+            verts.append(self.vertices[i + 1])
+            verts.append(inner.vertices[i])
+
+            verts.append(inner.vertices[i])
+            verts.append(inner.vertices[i + 1])
+            verts.append(self.vertices[i + 1])
+
+            verts.append(self.vertices[i + 1])
+            verts.append(self.vertices[i + 2])
+            verts.append(inner.vertices[i + 1])
+
+            verts.append(inner.vertices[i + 1])
+            verts.append(inner.vertices[i + 2])
+            verts.append(self.vertices[i + 2])
+
+        print("wire verts", verts)
+        return verts
 
 
 class Rect2D(BasicShape):

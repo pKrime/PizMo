@@ -351,7 +351,10 @@ class GrouzMo(GizmoGroup):
                     mpr.set_custom_shape(shapes.Rect2D.vertices)
                 elif widget.shape == ShapeType.QUAD:
                     mpr = self.gizmos.new(BonezMo.bl_idname)
-                    mpr.set_custom_shape(shapes.Quad2D.vertices)
+                    if widget.data.get('wire'):
+                        mpr.set_custom_shape(shapes.Quad2D().wire_vertices())
+                    else:
+                        mpr.set_custom_shape(shapes.Quad2D.vertices)
                     if widget.data.get('bone_follow'):
                         mpr.bone_follow = True
                 else:
