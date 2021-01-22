@@ -34,17 +34,26 @@ class BazeMo(Gizmo):
 
 class ArmzMo(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_root"
+    to_delete = False
 
     __slots__ = (
         "_custom_shape",
         "bone_name",
-        "_object"
+        "_object",
     )
 
     def refresh_shape(self):
-        self.hide = bpy.context.mode == 'POSE' and self._object == bpy.context.object
-        if self.bone_name:
-            self.matrix_space = self._object.pose.bones[self.bone_name].matrix
+        if bpy.context.mode == 'POSE':
+            self.hide = self._object == bpy.context.object
+
+            try:
+                p_bone = self._object.pose.bones[self.bone_name]
+            except ReferenceError:
+                self.to_delete = True
+            else:
+                self.matrix_space = p_bone.matrix
+        else:
+            self.hide = not self._object.visible_get()
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -56,7 +65,12 @@ class ArmzMo(BazeMo):
         if self._object:
             bpy.ops.object.mode_set(mode='OBJECT')
             bpy.ops.object.select_all(action='DESELECT')
-            self._object.select_set(True)
+            try:
+                self._object.select_set(True)
+            except ReferenceError:
+                self.to_delete = True
+                return {'FINISHED'}
+
             bpy.context.view_layer.objects.active = self._object
             bpy.ops.object.mode_set(mode='POSE')
         return {'RUNNING_MODAL'}
@@ -446,43 +460,10 @@ class GrouzMoRoots(GizmoGroup):
             mpr = self.gizmos.new(ArmzMo.bl_idname)
             mpr.set_object(ob)
 
-    def import_storage(self, context, clear_storage=True):
-        store = storage.Storage()
-
-        for widget in store.widgets():
-            mpr = None
-            if widget.type == WidgetType.BONE:
-                bone_name = widget.data['bone_name']
-                if bone_name in self.bone_names:
-                    continue
-
-                if widget.shape == ShapeType.MESH3D:
-                    mpr = self.gizmos.new(BonezMo3D.bl_idname)
-                    v_grp = widget.data.get('vertex_group')
-                    mpr.set_object(widget.data['object'], v_grp=v_grp)
-                elif widget.shape == ShapeType.RECT:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
-                    mpr.set_custom_shape(shapes.Rect2D.vertices)
-                elif widget.shape == ShapeType.QUAD:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
-                    mpr.set_custom_shape(shapes.Quad2D.vertices)
-                    if widget.data.get('bone_follow'):
-                        mpr.bone_follow = True
-                else:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
-
-                mpr.set_bone(context.object.pose.bones[bone_name])
-            if mpr:
-                if widget.shape == ShapeType.VERTICES:
-                    mpr.set_custom_shape(widget.data['vertices'])
-                elif widget.shape == ShapeType.MESH:
-                    raise NotImplementedError
-
-                mpr.set_position(widget.position[0], widget.position[1])
-
-        if clear_storage:
-            store.clear()
-
     def refresh(self, context):
-        for gizmo in self.gizmos:
+        for gizmo in reversed(self.gizmos):
             gizmo.refresh_shape()
+
+            if gizmo.to_delete:
+                self.gizmos.remove(gizmo)
+

@@ -18,45 +18,48 @@ def create_picker(store, ctrl_name, vertex_group):
     store.add_widget(wdg)
 
 
+
 if __name__ == "__main__":
-    side_controls = {
-        'toe.{0}': 'DEF-toe.{0}',
-        'foot_ik.{0}': 'DEF-foot.{0}',
-        'thigh_ik.{0}': 'DEF-thigh.{0}.001',
-
-        'shoulder.{0}': 'DEF-shoulder.{0}',
-        'upper_arm_fk.{0}': 'DEF-upper_arm.{0}.001',
-        'forearm_fk.{0}': 'DEF-forearm.{0}.001',
-
-        'hand_fk.{0}': 'DEF-palm.02.{0}',
-        'thumb.01_master.{0}': 'DEF-thumb.02.{0}',
-        'f_index.01_master.{0}': 'DEF-f_index.02.{0}',
-        'f_middle.01_master.{0}': 'DEF-f_middle.02.{0}',
-        'f_ring.01_master.{0}': 'DEF-f_ring.02.{0}',
-        'f_pinky.01_master.{0}': 'DEF-f_pinky.02.{0}',
-    }
-
     store = storage.Storage()
-    for side in ['L', 'R']:
-        for ctrl_name, vertex_group in side_controls.items():
-            create_picker(store, ctrl_name.format(side), vertex_group.format(side))
+    if not store.widgets():
 
-    controls = {
-        'torso': 'DEF-pelvis.{side}',
-        'hips': 'DEF-spine.001',
-        'chest': 'DEF-spine.003',
-        'neck': 'DEF-spine.004',
-        'head': 'DEF-spine.006',
-    }
+        side_controls = {
+            'toe.{0}': 'DEF-toe.{0}',
+            'foot_ik.{0}': 'DEF-foot.{0}',
+            'thigh_ik.{0}': 'DEF-thigh.{0}.001',
 
-    for ctrl_name, vertex_group in controls.items():
-        create_picker(store, ctrl_name, vertex_group)
+            'shoulder.{0}': 'DEF-shoulder.{0}',
+            'upper_arm_fk.{0}': 'DEF-upper_arm.{0}.001',
+            'forearm_fk.{0}': 'DEF-forearm.{0}.001',
 
-    wdg = Stock(
-        widget_type=WidgetType.BONE,
-        shape_type=ShapeType.QUAD,
-        position=(-0.5, -0.5),
-        data=dict(bone_name='root', bone_follow=True, frame=True)
-    )
+            'hand_fk.{0}': 'DEF-palm.02.{0}',
+            'thumb.01_master.{0}': 'DEF-thumb.02.{0}',
+            'f_index.01_master.{0}': 'DEF-f_index.02.{0}',
+            'f_middle.01_master.{0}': 'DEF-f_middle.02.{0}',
+            'f_ring.01_master.{0}': 'DEF-f_ring.02.{0}',
+            'f_pinky.01_master.{0}': 'DEF-f_pinky.02.{0}',
+        }
 
-    store.add_widget(wdg)
+        for side in ['L', 'R']:
+            for ctrl_name, vertex_group in side_controls.items():
+                create_picker(store, ctrl_name.format(side), vertex_group.format(side))
+
+        controls = {
+            'torso': 'DEF-pelvis.{side}',
+            'hips': 'DEF-spine.001',
+            'chest': 'DEF-spine.003',
+            'neck': 'DEF-spine.004',
+            'head': 'DEF-spine.006',
+        }
+
+        for ctrl_name, vertex_group in controls.items():
+            create_picker(store, ctrl_name, vertex_group)
+
+        wdg = Stock(
+            widget_type=WidgetType.BONE,
+            shape_type=ShapeType.QUAD,
+            position=(-0.5, -0.5),
+            data=dict(bone_name='root', bone_follow=True, frame=True)
+        )
+
+        store.add_widget(wdg)
