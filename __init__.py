@@ -36,7 +36,9 @@ reload(wizmo)
 from .wizmo import AddzMo
 from .wizmo import BonezMo, BonezMo3D, ArmzMo
 from .wizmo import GrouzMo, GrouzMoRoots
+from .ui import BONE_PT_pizmo_buttons
 
+from bpy.props import PointerProperty, StringProperty
 
 # REGISTER #
 
@@ -48,12 +50,25 @@ def register():
     bpy.utils.register_class(BonezMo3D)
     bpy.utils.register_class(GrouzMo)
     bpy.utils.register_class(GrouzMoRoots)
+    bpy.utils.register_class(BONE_PT_pizmo_buttons)
+
+    bpy.types.PoseBone.pizmo_vis_shape = PointerProperty(type=bpy.types.Object,
+                                                         name="Pizmo Visual Shape",
+                                                         description="Object to use for widget display",
+                                                         poll=lambda self, obj: obj.type == 'MESH')
+
+    bpy.types.PoseBone.pizmo_vert_grp = StringProperty(name="Pizmo Display Group",
+                                                       description="Vertices used for Selection Gizmo")
 
 
 def unregister():
+    bpy.utils.unregister_class(BONE_PT_pizmo_buttons)
     bpy.utils.unregister_class(GrouzMoRoots)
     bpy.utils.unregister_class(GrouzMo)
     bpy.utils.unregister_class(BonezMo)
     bpy.utils.unregister_class(BonezMo3D)
     bpy.utils.unregister_class(AddzMo)
     bpy.utils.unregister_class(ArmzMo)
+
+    del bpy.types.PoseBone.pizmo_vis_shape
+    del bpy.types.PoseBone.pizmo_vert_grp

@@ -347,8 +347,18 @@ class GrouzMo(GizmoGroup):
     def bone_names(self):
         return [gizmo.bone_name for gizmo in self.gizmos if hasattr(gizmo, 'bone_name')]
 
+    def setup_from_bone_attrs(self, context):
+        for bone in context.object.pose.bones:
+            if bone.pizmo_vis_shape:
+                mpr = self.gizmos.new(BonezMo3D.bl_idname)
+                mpr.set_object(bone.pizmo_vis_shape, v_grp=bone.pizmo_vert_grp)
+                mpr.set_bone(bone)
+
+        self._object = context.object
+
     def setup(self, context):
-        pass
+        if context.object:
+            self.setup_from_bone_attrs(context)
 
     def tallest_rigged_mesh(self, context):
         rigged_objs = list(
@@ -416,8 +426,7 @@ class GrouzMo(GizmoGroup):
             self.clear()
 
         if not self.gizmos:
-            self.import_storage(context)
-            self._object = context.object
+            self.setup_from_bone_attrs(context)
 
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
