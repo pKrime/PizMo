@@ -86,7 +86,7 @@ def register_armature_properties():
                                                     subtype='PERCENTAGE')
 
     armature_type.pizmo_widget_scale = FloatProperty(name="Widgets Scale",
-                                                     min=0.1, max=3.0, default=1.2,
+                                                     min=0.1, max=3.0, default=1.1,
                                                      update=wizmo.GrouzMo.mark_dirty
                                                      )
 

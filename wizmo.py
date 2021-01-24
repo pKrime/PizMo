@@ -190,8 +190,6 @@ class BonezMo3D(BazeMo):
     __slots__ = (
         "custom_shape",
         "bone_name",
-        "_init_mouse_x",
-        "_init_mouse_y",
         "_meshshape",
     )
 
@@ -245,18 +243,17 @@ class BonezMo3D(BazeMo):
         self.matrix_offset[1][3] = y
 
     def invoke(self, context, event):
-        self._init_mouse_y = event.mouse_y
-        self._init_mouse_x = event.mouse_x
-
         if not event.shift:
             bpy.ops.pose.select_all(action='DESELECT')
 
         try:
             bone = context.object.data.bones[self.bone_name]
         except KeyError:
-            pass
-        else:
-            bone.select = True
+            return {'FINISHED'}
+
+        bone.select = True
+        bones = context.object.data.bones
+        bones.active = bones[bone.name]
 
         return {'RUNNING_MODAL'}
 
@@ -264,19 +261,7 @@ class BonezMo3D(BazeMo):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
-        delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
-        delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
-
-        move_mode = event.alt
-        scale_mode = event.shift
-
-        if move_mode:
-            self.matrix_offset[0][3] += delta_x
-            self.matrix_offset[1][3] += delta_y
-        if scale_mode:
-            self.scale_basis += delta_x
-
-        return {'RUNNING_MODAL'}
+        return {'FINISHED'}
 
 
 class GrouzMo2D(GizmoGroup):
