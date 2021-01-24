@@ -19,6 +19,9 @@ class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
         row = layout.row()
         row.prop(context.object.data, 'pizmo_armature_widget')
 
+        # TODO: default colors
+        # TODO: size
+
 
 class BONE_PT_pizmo_properties(bpy.types.Panel):
     bl_label = "Pizmo Bone Display"
