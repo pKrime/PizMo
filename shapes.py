@@ -1,4 +1,10 @@
 import bpy
+
+from math import pi
+from math import cos
+from math import sin
+from math import sqrt
+
 from copy import deepcopy
 import numpy as np
 
@@ -13,6 +19,7 @@ class BasicShape:
         self.vertices = deepcopy(self.vertices)
         self.scale(scale)
         self.offset(offset)
+        self.center()
 
     def scale(self, factor):
         for verts in self.vertices:
@@ -101,6 +108,46 @@ class Cross2D(BasicShape):
         [1.0, -0.5],
         [-1.0, -0.5],
     ]
+
+
+class Circle2D(BasicShape):
+    def __init__(self, scale=1.0, offset=(0.0, 0.0), segments=24):
+        self.segments = segments
+        self.vertices = []
+
+        if any(offset):
+            raise NotImplementedError
+
+        full_circle = 2 * pi
+        arc_len = full_circle / self.segments
+
+        for i in range(self.segments):
+            arc = arc_len * i
+            self.vertices.append([cos(arc) * scale, sin(arc * scale)])
+            arc = arc_len * (i + 1)
+            self.vertices.append([cos(arc) * scale, sin(arc) * scale])
+            self.vertices.append([0.0, 0.0])
+
+    @property
+    def size(self):
+        vert = self.vertices[0]
+        diameter = sqrt(pow(vert[0], 2) + pow(vert[1], 2))
+        return diameter, diameter
+
+    def frame_vertices(self, thickness=0.25):
+        scale = 1 - thickness
+        verts = []
+
+        inner = None
+        for vert in self.vertices:
+            if inner:
+                verts.append(vert)
+                verts.append(inner)
+            verts.append(vert)
+            inner = [vert[0] * scale, vert[1] * scale]
+            verts.append(inner)
+
+        return verts
 
 
 class MeshShape3D(BasicShape):

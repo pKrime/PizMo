@@ -14,6 +14,7 @@ def register_properties():
     display_types = (
         ("mesh", "Mesh", "Object mesh"),
         ("shape", "Shape", "Geometric shape"),
+        ("none", "None", "No Pizmo shape"),
     )
 
     shape_types = (

@@ -357,12 +357,13 @@ class GrouzMo(GizmoGroup):
             elif bone.pizmo_vis_type == 'shape' and bone.pizmo_vis_shape != 'none':
                 if bone.pizmo_vis_shape == 'quad':
                     wdg_shape = shapes.Quad2D()
+                elif bone.pizmo_vis_shape == 'circle':
+                    wdg_shape = shapes.Circle2D()
                 else:
                     # TODO: report warning
                     print("coudl not generate shape", bone.pizmo_vis_shape, "for", bone.name)
                     continue
 
-                wdg_shape.center()
                 wdg_verts = wdg_shape.frame_vertices() if bone.pizmo_shape_frame else wdg_shape.vertices
                 mpr = self.gizmos.new(BonezMo.bl_idname)
                 mpr.set_custom_shape(wdg_verts)
