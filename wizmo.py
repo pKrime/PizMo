@@ -190,6 +190,12 @@ class BonezMo3D(BazeMo):
     def draw_select(self, context, select_id):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
 
+    def bone_is_visible(self, context):
+        bone = context.object.data.bones[self.bone_name]
+        layers = [i for i, layer in enumerate(bone.layers) if layer]
+
+        return any([context.object.data.layers[i] for i in layers])
+
     def setup(self):
         self.reset_color()
 
@@ -201,7 +207,11 @@ class BonezMo3D(BazeMo):
         if not self._meshshape:
             return
 
-        self.custom_shape = self.new_custom_shape('TRIS', self._meshshape.vertices)
+        if context:
+            self.hide = not self.bone_is_visible(context)
+
+        if not self.hide:
+            self.custom_shape = self.new_custom_shape('TRIS', self._meshshape.vertices)
 
     def set_object(self, obj, v_grp=None):
         if v_grp:
