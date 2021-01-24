@@ -41,11 +41,15 @@ def register_properties():
                                                         name="Widget Mesh",
                                                         description="Object to use for widget display",
                                                         poll=lambda self, obj: obj.type == 'MESH',
-                                                        update = wizmo.GrouzMo.mark_dirty)
+                                                        update=wizmo.GrouzMo.mark_dirty)
 
     bpy.types.PoseBone.pizmo_vert_grp = StringProperty(name="Widget Display Group",
                                                        description="Vertices used for Selection Gizmo",
                                                        update=wizmo.GrouzMo.mark_dirty)
+
+    bpy.types.Armature.pizmo_armature_widget = BoolProperty(name="Armature Widget",
+                                                            default=False,
+                                                            update=wizmo.GrouzMoRoots.mark_dirty)
 
 
 def unregister_properties():
@@ -55,3 +59,4 @@ def unregister_properties():
 
     del bpy.types.PoseBone.pizmo_vis_mesh
     del bpy.types.PoseBone.pizmo_vert_grp
+    del bpy.types.PoseBone.pizmo_armature_widget

@@ -17,7 +17,7 @@ reload(storage)
 reload(enum_types)
 
 
-from .shapes import Cross2D, MeshShape3D
+from .shapes import Circle2D, Cross2D, MeshShape3D
 from .enum_types import WidgetType, ShapeType
 
 class BazeMo(Gizmo):
@@ -43,15 +43,12 @@ class ArmzMo(BazeMo):
     )
 
     def refresh_shape(self):
+        # show armature select widget for all other armatures when in pose mode, all armatures when in object mode
         if bpy.context.mode == 'POSE':
             self.hide = self._object == bpy.context.object
 
-            try:
-                p_bone = self._object.pose.bones[self.bone_name]
-            except ReferenceError:
-                self.to_delete = True
-            else:
-                self.matrix_space = p_bone.matrix
+            p_bone = self._object.pose.bones[self.bone_name]
+            self.matrix_space = p_bone.matrix
         else:
             self.hide = not self._object.visible_get()
 
@@ -84,67 +81,20 @@ class ArmzMo(BazeMo):
         self.reset_color()
 
         if not hasattr(self, "custom_shape"):
-            self.custom_shape = self.new_custom_shape('TRIS', Cross2D.vertices)
+            self.custom_shape = self.new_custom_shape('TRIS', Circle2D().vertices)
 
         self.use_draw_modal = True
         self.use_draw_scale = False
         self.use_draw_offset_scale = False
 
-    def set_object(self, obj):
+    def set_object(self, obj, bone_name=""):
         self._object = obj
-        # TODO: pick lowest bone in separate func
-        self.bone_name = next((bone.name for bone in obj.pose.bones if not bone.parent), None)
 
-
-class AddzMo(BazeMo):
-    bl_idname = "VIEW3D_GT_pizmo_add"
-
-    __slots__ = (
-        "custom_shape",
-        "_init_mouse_x",
-        "_init_mouse_y",
-    )
-
-    def draw(self, context):
-        self.draw_custom_shape(self.custom_shape)
-
-    def draw_select(self, context, select_id):
-        self.draw_custom_shape(self.custom_shape, select_id=select_id)
-
-    def setup(self):
-        self.base_color = 0.25, 0.5, 0.5
-        self.reset_color()
-
-        if not hasattr(self, "custom_shape"):
-            self.custom_shape = self.new_custom_shape('TRIS', Cross2D.vertices)
-
-        self.scale_basis = 0.25
-        self.use_draw_modal = True
-        self.use_draw_offset_scale = True
-
-    def invoke(self, context, event):
-        self._init_mouse_x = event.mouse_x
-        self._init_mouse_y = event.mouse_y
-
-        for bone in context.selected_pose_bones:
-            if bone.name not in self.group.bone_names:
-                mpr = self.group.gizmos.new(BonezMo.bl_idname)
-                mpr.set_bone(bone)
-        return {'RUNNING_MODAL'}
-
-    def exit(self, context, cancel):
-        context.area.header_text_set(None)
-
-    def modal(self, context, event, tweak):
-        delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
-        delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
-
-        for gizmo in self.group.gizmos:
-            gizmo.matrix_offset[0][3] += delta_x
-            gizmo.matrix_offset[2][3] += delta_y
-
-        self.group.refresh(context)
-        return {'RUNNING_MODAL'}
+        if bone_name:
+            self.bone_name = bone_name
+        else:
+            # TODO: pick lowest bone in separate func
+            self.bone_name = next((bone.name for bone in obj.pose.bones if not bone.parent), None)
 
 
 class BonezMo(BazeMo):
@@ -481,6 +431,8 @@ class GrouzMoRoots(GizmoGroup):
     sel_color = 0.3, 0.6, 0.7
     draw_offset = [0.0, 0.0]
 
+    _dirty = False
+
     @classmethod
     def poll(cls, context):
         return context.mode in ('OBJECT', 'POSE')
@@ -491,13 +443,25 @@ class GrouzMoRoots(GizmoGroup):
                 continue
             if ob.type != 'ARMATURE':
                 continue
+            if not ob.data.pizmo_armature_widget:
+                continue
+
             mpr = self.gizmos.new(ArmzMo.bl_idname)
             mpr.set_object(ob)
 
     def refresh(self, context):
+        if GrouzMoRoots._dirty:
+            self.clear()
+            self.setup(context)
+            GrouzMoRoots._dirty = False
+
         for gizmo in reversed(self.gizmos):
             gizmo.refresh_shape()
 
-            if gizmo.to_delete:
-                self.gizmos.remove(gizmo)
+    def clear(self):
+        for gizmo in reversed(self.gizmos):
+            self.gizmos.remove(gizmo)
 
+    @staticmethod
+    def mark_dirty(actor, context):
+        GrouzMoRoots._dirty = True

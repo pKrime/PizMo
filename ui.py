@@ -1,8 +1,27 @@
 import bpy
 
 
-class BONE_PT_pizmo_buttons(bpy.types.Panel):
-    bl_label = "Pizmo Display"
+class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
+    bl_label = "Pizmo Armature Display"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+
+    @classmethod
+    def poll(cls, context):
+        if not context.object:
+            return False
+        return context.object.type == 'ARMATURE'
+
+    def draw(self, context):
+        layout = self.layout
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_armature_widget')
+
+
+class BONE_PT_pizmo_properties(bpy.types.Panel):
+    bl_label = "Pizmo Bone Display"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "bone"
