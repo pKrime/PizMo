@@ -224,7 +224,7 @@ class BonezMo3D(BazeMo):
         if not self.hide:
             self.custom_shape = self.new_custom_shape('TRIS', self._meshshape.vertices)
 
-    def set_object(self, obj, v_grp=None):
+    def set_object(self, obj, v_grp=None, weight_threshold=0.2, widget_scale=1.1):
         if v_grp:
             if '{side}' in v_grp:
                 v_grps = [v_grp.replace('{side}', 'L'), v_grp.replace('{side}', 'R')]
@@ -233,7 +233,7 @@ class BonezMo3D(BazeMo):
         else:
             v_grps = []
 
-        self._meshshape = MeshShape3D(obj, scale=1.1, vertex_groups=v_grps)
+        self._meshshape = MeshShape3D(obj, scale=widget_scale, vertex_groups=v_grps, weight_threshold=weight_threshold)
         if len(self._meshshape.vertices) > 2:
             self.refresh_shape(None)
 
@@ -321,7 +321,9 @@ class GrouzMo(GizmoGroup):
         for bone in context.object.pose.bones:
             if bone.pizmo_vis_type == 'mesh' and bone.pizmo_vis_mesh:
                 mpr = self.gizmos.new(BonezMo3D.bl_idname)
-                mpr.set_object(bone.pizmo_vis_mesh, v_grp=bone.pizmo_vert_grp)
+                mpr.set_object(bone.pizmo_vis_mesh, v_grp=bone.pizmo_vert_grp,
+                               weight_threshold=bone.pizmo_min_vertweight,
+                               widget_scale=context.object.data.pizmo_widget_scale)
                 mpr.set_bone(bone)
             elif bone.pizmo_vis_type == 'shape' and bone.pizmo_vis_shape != 'none':
                 if bone.pizmo_vis_shape == 'quad':

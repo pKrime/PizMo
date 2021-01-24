@@ -49,6 +49,11 @@ def register_bone_properties():
                                                        description="Vertices used for Selection Gizmo",
                                                        update=wizmo.GrouzMo.mark_dirty)
 
+    bpy.types.PoseBone.pizmo_min_vertweight = FloatProperty(name="Display Group Threshold",
+                                                            description="Minimum weight for displayed vertices",
+                                                            min=0.0, max=1.0, default=0.2,
+                                                            update=wizmo.GrouzMo.mark_dirty)
+
 
 def register_armature_properties():
     armature_type = bpy.types.Armature
@@ -76,6 +81,15 @@ def register_armature_properties():
                                                     min=0.0, max=1.0, default=0.25,
                                                     subtype='PERCENTAGE')
 
+    armature_type.pizmo_color_alpha = FloatProperty(name="Widgets Alpha",
+                                                    min=0.0, max=1.0, default=0.25,
+                                                    subtype='PERCENTAGE')
+
+    armature_type.pizmo_widget_scale = FloatProperty(name="Widgets Scale",
+                                                     min=0.1, max=3.0, default=1.2,
+                                                     update=wizmo.GrouzMo.mark_dirty
+                                                     )
+
 
 def register_properties():
     register_bone_properties()
@@ -89,9 +103,11 @@ def unregister_properties():
 
     del bpy.types.PoseBone.pizmo_vis_mesh
     del bpy.types.PoseBone.pizmo_vert_grp
+    del bpy.types.PoseBone.pizmo_min_vertweight
 
     del bpy.types.Armature.pizmo_armature_widget
     del bpy.types.Armature.pizmo_color_base
     del bpy.types.Armature.pizmo_color_highlight
     del bpy.types.Armature.pizmo_color_alpha
     del bpy.types.Armature.pizmo_color_selected
+    del bpy.types.Armature.pizmo_widget_scale

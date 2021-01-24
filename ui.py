@@ -33,7 +33,9 @@ class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
 
         row = layout.row()
         row.prop(context.object.data, 'pizmo_color_alpha')
-        # TODO: size
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_widget_scale')
 
 
 class BONE_PT_pizmo_properties(bpy.types.Panel):
@@ -41,7 +43,6 @@ class BONE_PT_pizmo_properties(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "bone"
-    #bl_options = {'DEFAULT_OPEN'}
 
     @classmethod
     def poll(cls, context):
@@ -66,7 +67,9 @@ class BONE_PT_pizmo_properties(bpy.types.Panel):
             else:
                 row.prop(pbone, "pizmo_vert_grp")
 
-            # TODO: vertex_group threshold
+            row = layout.row()
+            row.prop(pbone, "pizmo_min_vertweight")
+
         elif pbone.pizmo_vis_type == 'shape':
             row = layout.row()
             row.prop(pbone, 'pizmo_vis_shape')
