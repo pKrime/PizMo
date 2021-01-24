@@ -335,6 +335,7 @@ class GrouzMo(GizmoGroup):
     draw_offset = [0.0, 0.0]
 
     _object = None
+    _dirty = False
 
     @classmethod
     def poll(cls, context):
@@ -349,9 +350,23 @@ class GrouzMo(GizmoGroup):
 
     def setup_from_bone_attrs(self, context):
         for bone in context.object.pose.bones:
-            if bone.pizmo_vis_shape:
+            if bone.pizmo_vis_type == 'mesh' and bone.pizmo_vis_mesh:
                 mpr = self.gizmos.new(BonezMo3D.bl_idname)
-                mpr.set_object(bone.pizmo_vis_shape, v_grp=bone.pizmo_vert_grp)
+                mpr.set_object(bone.pizmo_vis_mesh, v_grp=bone.pizmo_vert_grp)
+                mpr.set_bone(bone)
+            elif bone.pizmo_vis_type == 'shape' and bone.pizmo_vis_shape != 'none':
+                if bone.pizmo_vis_shape == 'quad':
+                    wdg_shape = shapes.Quad2D()
+                else:
+                    # TODO: report warning
+                    print("coudl not generate shape", bone.pizmo_vis_shape, "for", bone.name)
+                    continue
+
+                wdg_shape.center()
+                wdg_verts = wdg_shape.frame_vertices() if bone.pizmo_shape_frame else wdg_shape.vertices
+                mpr = self.gizmos.new(BonezMo.bl_idname)
+                mpr.set_custom_shape(wdg_verts)
+                mpr.bone_follow = bone.pizmo_bone_follow
                 mpr.set_bone(bone)
 
         self._object = context.object
@@ -421,8 +436,15 @@ class GrouzMo(GizmoGroup):
         for gizmo in reversed(self.gizmos):
             self.gizmos.remove(gizmo)
 
+    @staticmethod
+    def mark_dirty(actor, context):
+        GrouzMo._dirty = True
+
     def refresh(self, context):
         if context.object != self._object:
+            GrouzMo._dirty = True
+
+        if GrouzMo._dirty:
             self.clear()
 
         if not self.gizmos:
@@ -444,6 +466,8 @@ class GrouzMo(GizmoGroup):
                 gizmo.refresh_shape(context)
             except AttributeError:
                 pass
+
+        GrouzMo._dirty = False
 
 
 class GrouzMoRoots(GizmoGroup):

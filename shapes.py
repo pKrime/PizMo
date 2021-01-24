@@ -24,6 +24,15 @@ class BasicShape:
             for i, co in enumerate(verts):
                 verts[i] = co + offset[i]
 
+    @property
+    def size(self):
+        # TODO
+        return 1.0, 1.0
+
+    def center(self):
+        size_x, size_y = self.size
+        self.offset((size_x/-2.0, size_y/-2.0))
+
 
 class Tris2D(BasicShape):
     vertices = [
@@ -38,10 +47,15 @@ class Quad2D(BasicShape):
                                             [Tris2D.vertices[-1][0], Tris2D.vertices[0][1]],
                                             deepcopy(Tris2D.vertices[0])]
 
+    @property
+    def size(self):
+        low_left = self.vertices[0]
+        up_right = self.vertices[2]
+        return abs(up_right[0] - low_left[0]), abs(up_right[1] - low_left[1])
+
     def frame_vertices(self, thickness=0.25):
-        offset = thickness
-        offset /= 2
-        inner = Quad2D(scale=1 - thickness, offset=(offset, offset))
+        inner = Quad2D(scale=1 - thickness)
+        inner.center()
 
         verts = []
         for i in range(0, 4, 3):

@@ -29,21 +29,27 @@ bl_info = {
 import bpy
 
 from . import wizmo
+from . import properties
+from . import ui
 
 from importlib import reload
 reload(wizmo)
+reload(properties)
+reload(ui)
 
 from .wizmo import AddzMo
 from .wizmo import BonezMo, BonezMo3D, ArmzMo
 from .wizmo import GrouzMo, GrouzMoRoots
 from .ui import BONE_PT_pizmo_buttons
 
-from bpy.props import PointerProperty, StringProperty
+
 
 # REGISTER #
 
 
 def register():
+    properties.register_properties()
+
     bpy.utils.register_class(ArmzMo)
     bpy.utils.register_class(AddzMo)
     bpy.utils.register_class(BonezMo)
@@ -51,14 +57,6 @@ def register():
     bpy.utils.register_class(GrouzMo)
     bpy.utils.register_class(GrouzMoRoots)
     bpy.utils.register_class(BONE_PT_pizmo_buttons)
-
-    bpy.types.PoseBone.pizmo_vis_shape = PointerProperty(type=bpy.types.Object,
-                                                         name="Pizmo Visual Shape",
-                                                         description="Object to use for widget display",
-                                                         poll=lambda self, obj: obj.type == 'MESH')
-
-    bpy.types.PoseBone.pizmo_vert_grp = StringProperty(name="Pizmo Display Group",
-                                                       description="Vertices used for Selection Gizmo")
 
 
 def unregister():
@@ -70,5 +68,4 @@ def unregister():
     bpy.utils.unregister_class(AddzMo)
     bpy.utils.unregister_class(ArmzMo)
 
-    del bpy.types.PoseBone.pizmo_vis_shape
-    del bpy.types.PoseBone.pizmo_vert_grp
+    properties.unregister_properties()
