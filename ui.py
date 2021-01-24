@@ -19,7 +19,20 @@ class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
         row = layout.row()
         row.prop(context.object.data, 'pizmo_armature_widget')
 
-        # TODO: default colors
+        row = layout.row()
+        row.label(text="Widget Colors")
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_color_base')
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_color_highlight')
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_color_selected')
+
+        row = layout.row()
+        row.prop(context.object.data, 'pizmo_color_alpha')
         # TODO: size
 
 

@@ -18,6 +18,19 @@ def create_picker(store, ctrl_name, vertex_group):
     store.add_widget(wdg)
 
 
+def tallest_rigged_mesh(context):
+    rigged_objs = list(
+        (ob for ob in bpy.data.objects if ob.type == 'MESH'
+         and next((mod for mod in ob.modifiers if mod.type == 'ARMATURE' and mod.object == context.object), None))
+    )
+
+    if not rigged_objs:
+        return
+
+    max_height = max(ob.dimensions[2] for ob in rigged_objs)
+    tallest = next(ob for ob in rigged_objs if ob.dimensions[2] == max_height)
+    return tallest
+
 
 if __name__ == "__main__":
     store = storage.Storage()

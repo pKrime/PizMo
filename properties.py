@@ -3,13 +3,15 @@ from bpy.props import PointerProperty
 from bpy.props import StringProperty
 from bpy.props import EnumProperty
 from bpy.props import BoolProperty
+from bpy.props import FloatProperty
+from bpy.props import FloatVectorProperty
 
 from . import wizmo
 from importlib import reload
 reload(wizmo)
 
 
-def register_properties():
+def register_bone_properties():
 
     display_types = (
         ("mesh", "Mesh", "Object mesh"),
@@ -47,9 +49,37 @@ def register_properties():
                                                        description="Vertices used for Selection Gizmo",
                                                        update=wizmo.GrouzMo.mark_dirty)
 
-    bpy.types.Armature.pizmo_armature_widget = BoolProperty(name="Armature Widget",
-                                                            default=False,
-                                                            update=wizmo.GrouzMoRoots.mark_dirty)
+
+def register_armature_properties():
+    armature_type = bpy.types.Armature
+
+    armature_type.pizmo_armature_widget = BoolProperty(name="Armature Widget",
+                                                       default=False,
+                                                       update=wizmo.GrouzMoRoots.mark_dirty)
+
+    armature_type.pizmo_color_base = FloatVectorProperty(name="Widgets Base Color",
+                                                         subtype='COLOR',
+                                                         default=[0.1, 0.1, 0.1],
+                                                         )
+
+    armature_type.pizmo_color_selected = FloatVectorProperty(name="Selected Widgets Color",
+                                                             subtype='COLOR',
+                                                             default=[0.3, 0.6, 0.7],
+                                                             )
+
+    armature_type.pizmo_color_highlight = FloatVectorProperty(name="Widgets Highlight Color",
+                                                              subtype='COLOR',
+                                                              default=[0.2, 0.5, 0.6],
+                                                              )
+
+    armature_type.pizmo_color_alpha = FloatProperty(name="Widgets Alpha",
+                                                    min=0.0, max=1.0, default=0.25,
+                                                    subtype='PERCENTAGE')
+
+
+def register_properties():
+    register_bone_properties()
+    register_armature_properties()
 
 
 def unregister_properties():
@@ -59,4 +89,9 @@ def unregister_properties():
 
     del bpy.types.PoseBone.pizmo_vis_mesh
     del bpy.types.PoseBone.pizmo_vert_grp
-    del bpy.types.PoseBone.pizmo_armature_widget
+
+    del bpy.types.Armature.pizmo_armature_widget
+    del bpy.types.Armature.pizmo_color_base
+    del bpy.types.Armature.pizmo_color_highlight
+    del bpy.types.Armature.pizmo_color_alpha
+    del bpy.types.Armature.pizmo_color_selected

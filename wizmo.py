@@ -20,16 +20,31 @@ reload(enum_types)
 from .shapes import Circle2D, Cross2D, MeshShape3D
 from .enum_types import WidgetType, ShapeType
 
+
 class BazeMo(Gizmo):
-    base_color = 0.1, 0.1, 0.1
-    base_highlight = 0.2, 0.5, 0.6
 
-    def reset_color(self):
-        self.color = self.base_color
-        self.alpha = 0.25
+    def refresh_color(self, context=None, selected=False):
+        context = context if context else bpy.context
+        obj = context.object
 
-        self.color_highlight = self.base_highlight
-        self.alpha_highlight = 0.25
+        if obj and obj.type == 'ARMATURE':
+            if selected:
+                color = context.object.data.pizmo_color_selected
+                alpha = min(obj.data.pizmo_color_alpha + 0.25, 1.0)
+            else:
+                color = obj.data.pizmo_color_base
+                alpha = obj.data.pizmo_color_alpha
+            color_highlight = obj.data.pizmo_color_highlight
+        else:
+            color = bpy.types.Armature.pizmo_color_base[1]['default']
+            color_highlight = bpy.types.Armature.pizmo_color_highlight[1]['default']
+            alpha = bpy.types.Armature.pizmo_color_alpha[1]['default']
+
+        self.color = color
+        self.color_highlight = color_highlight
+        self.alpha = alpha
+        self.alpha_highlight = self.alpha
+        self.hide_selected = selected
 
 
 class ArmzMo(BazeMo):
@@ -77,8 +92,7 @@ class ArmzMo(BazeMo):
 
     def setup(self):
         self.bone_name = ''
-        self.base_color = 0.25, 0.5, 0.5
-        self.reset_color()
+        self.refresh_color()
 
         if not hasattr(self, "custom_shape"):
             self.custom_shape = self.new_custom_shape('TRIS', Circle2D().vertices)
@@ -119,7 +133,7 @@ class BonezMo(BazeMo):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
 
     def setup(self):
-        self.reset_color()
+        self.refresh_color()
 
         self.use_draw_modal = True
         self.use_draw_scale = False
@@ -181,9 +195,6 @@ class BonezMo3D(BazeMo):
         "_meshshape",
     )
 
-    def _update_offset_matrix(self):
-        pass
-
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
 
@@ -197,7 +208,7 @@ class BonezMo3D(BazeMo):
         return any([context.object.data.layers[i] for i in layers])
 
     def setup(self):
-        self.reset_color()
+        self.refresh_color()
 
         self.use_draw_modal = True
         self.use_draw_scale = False
@@ -246,7 +257,6 @@ class BonezMo3D(BazeMo):
             pass
         else:
             bone.select = True
-            self.hide_select = True
 
         return {'RUNNING_MODAL'}
 
@@ -291,7 +301,6 @@ class GrouzMo(GizmoGroup):
     bl_region_type = 'WINDOW'
     bl_options = {'3D', 'PERSISTENT'}
 
-    sel_color = 0.3, 0.6, 0.7
     draw_offset = [0.0, 0.0]
 
     _object = None
@@ -335,19 +344,6 @@ class GrouzMo(GizmoGroup):
     def setup(self, context):
         if context.object:
             self.setup_from_bone_attrs(context)
-
-    def tallest_rigged_mesh(self, context):
-        rigged_objs = list(
-            (ob for ob in bpy.data.objects if ob.type == 'MESH'
-             and next((mod for mod in ob.modifiers if mod.type == 'ARMATURE' and mod.object == context.object), None))
-        )
-
-        if not rigged_objs:
-            return
-
-        max_height = max(ob.dimensions[2] for ob in rigged_objs)
-        tallest = next(ob for ob in rigged_objs if ob.dimensions[2] == max_height)
-        return tallest
 
     def import_storage(self, context, clear_storage=False):
         store = storage.Storage()
@@ -413,20 +409,8 @@ class GrouzMo(GizmoGroup):
 
         sel_names = [bone.name for bone in context.selected_pose_bones]
         for gizmo in self.gizmos:
-            try:
-                bone_name = gizmo.bone_name
-            except AttributeError:
-                continue
-            if bone_name in sel_names:
-                gizmo.color = self.sel_color
-                gizmo.alpha = 0.5
-            else:
-                gizmo.reset_color()
-                gizmo.hide_select = False
-            try:
-                gizmo.refresh_shape(context)
-            except AttributeError:
-                pass
+            gizmo.refresh_color(context, gizmo.bone_name in sel_names)
+            gizmo.refresh_shape(context)
 
         GrouzMo._dirty = False
 
@@ -438,9 +422,7 @@ class GrouzMoRoots(GizmoGroup):
     bl_region_type = 'WINDOW'
     bl_options = {'3D', 'PERSISTENT'}
 
-    sel_color = 0.3, 0.6, 0.7
     draw_offset = [0.0, 0.0]
-
     _dirty = False
 
     @classmethod
