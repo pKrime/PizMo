@@ -1,6 +1,14 @@
 import bpy
 
 
+def panel_checkbox(self, context):
+    row = self.layout.row()
+    row.label(text="PizMo Controls")
+
+    row = self.layout.row()
+    row.prop(context.window_manager, "pizmo_display_widgets")
+
+
 class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
     bl_label = "Pizmo Armature Display"
     bl_space_type = 'PROPERTIES'

@@ -243,9 +243,13 @@ class GrouzMo(GizmoGroup):
 
     @classmethod
     def poll(cls, context):
+        if not context.window_manager.pizmo_display_widgets:
+            return False
+
         ob = context.object
         if ob and ob.type == 'ARMATURE':
             return ob.mode == 'POSE'
+
         return False
 
     @property
@@ -364,6 +368,9 @@ class GrouzMoRoots(GizmoGroup):
 
     @classmethod
     def poll(cls, context):
+        if not context.window_manager.pizmo_display_widgets:
+            return False
+
         return context.mode in ('OBJECT', 'POSE')
 
     def setup(self, context):

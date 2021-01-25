@@ -18,7 +18,7 @@
 
 bl_info = {
     "name": "PizMo",
-    "version": (0, 0, 1),
+    "version": (0, 2, 1),
     "author": "Paolo Acampora",
     "blender": (2, 90, 0),
     "description": "Display Bone Picker along object",
@@ -54,8 +54,12 @@ def register():
     bpy.utils.register_class(BONE_PT_pizmo_properties)
     bpy.utils.register_class(ARMATURE_PT_pizmo_properties)
 
+    bpy.types.VIEW3D_PT_gizmo_display.append(ui.panel_checkbox)
+
 
 def unregister():
+    bpy.types.VIEW3D_PT_gizmo_display.remove(ui.panel_checkbox)
+
     bpy.utils.unregister_class(ARMATURE_PT_pizmo_properties)
     bpy.utils.unregister_class(BONE_PT_pizmo_properties)
     bpy.utils.unregister_class(GrouzMoRoots)

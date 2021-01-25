@@ -96,11 +96,17 @@ def register_armature_properties():
 
 
 def register_properties():
+    bpy.types.WindowManager.pizmo_display_widgets = bpy.props.BoolProperty(name="Display Pizmo",
+                                                                           description="Geometry picker for armatures",
+                                                                           default=True)
+
     register_bone_properties()
     register_armature_properties()
 
 
 def unregister_properties():
+    del bpy.types.WindowManager.pizmo_display_widgets
+
     del bpy.types.PoseBone.pizmo_vis_type
     del bpy.types.PoseBone.pizmo_vis_shape
     del bpy.types.PoseBone.pizmo_shape_frame
