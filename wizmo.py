@@ -69,10 +69,20 @@ class ArmzMo(BazeMo):
             self.hide = not obj.visible_get()
 
         if not self.hide:
-            bound = obj.bound_box
-            self.matrix_space[0][3] = (bound[0][0] + bound[7][0]) / 2
-            self.matrix_space[1][3] = (bound[0][1] + bound[7][1]) / 2
-            self.matrix_space[2][3] = bound[0][2] # bbox min Z
+            if obj.data.pizmo_armature_root:
+                try:
+                    pbone = obj.pose.bones[obj.data.pizmo_armature_root]
+                except KeyError:
+                    return
+
+                self.matrix_space[0][3] = pbone.matrix[0][3]
+                self.matrix_space[1][3] = pbone.matrix[1][3]
+                self.matrix_space[2][3] = pbone.matrix[2][3]
+            else:
+                bound = obj.bound_box
+                self.matrix_space[0][3] = (bound[0][0] + bound[7][0]) / 2
+                self.matrix_space[1][3] = (bound[0][1] + bound[7][1]) / 2
+                self.matrix_space[2][3] = bound[0][2] # bbox min Z
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -123,79 +133,6 @@ class ArmzMo(BazeMo):
 
     def set_object(self, obj):
         self._object_name = obj.name
-
-
-class BonezMo(BazeMo):
-    bl_idname = "VIEW3D_GT_pizmo_bone"
-
-    __slots__ = (
-        "custom_shape",
-        "bone_name",
-        "_init_mouse_x",
-        "_init_mouse_y",
-        "bone_follow"
-    )
-
-    def refresh_shape(self, context):
-        if self.bone_follow:
-            self.matrix_space = context.object.pose.bones[self.bone_name].matrix
-
-    def draw(self, context):
-        self.draw_custom_shape(self.custom_shape)
-
-    def draw_select(self, context, select_id):
-        self.draw_custom_shape(self.custom_shape, select_id=select_id)
-
-    def setup(self):
-        self.refresh_color()
-
-        self.use_draw_modal = True
-        self.use_draw_scale = False
-        self.use_draw_offset_scale = False
-
-    def set_custom_shape(self, vertices):
-        self.custom_shape = self.new_custom_shape('TRIS', vertices)
-
-    def set_bone(self, bone):
-        self.bone_name = bone.name
-
-    def set_position(self, x, y):
-        self.matrix_offset[0][3] = x
-        self.matrix_offset[1][3] = y
-
-    def invoke(self, context, event):
-        self._init_mouse_y = event.mouse_y
-        self._init_mouse_x = event.mouse_x
-
-        if not event.shift:
-            bpy.ops.pose.select_all(action='DESELECT')
-
-        try:
-            bone = context.object.data.bones[self.bone_name]
-        except KeyError:
-            pass
-        else:
-            bone.select = True
-
-        return {'RUNNING_MODAL'}
-
-    def exit(self, context, cancel):
-        context.area.header_text_set(None)
-
-    def modal(self, context, event, tweak):
-        delta_y = (event.mouse_y - self._init_mouse_y) / 1000.0
-        delta_x = (event.mouse_x - self._init_mouse_x) / 1000.0
-
-        move_mode = event.alt
-        scale_mode = event.shift
-
-        if move_mode:
-            self.matrix_offset[0][3] += delta_x
-            self.matrix_offset[1][3] += delta_y
-        if scale_mode:
-            self.scale_basis += delta_x
-
-        return {'RUNNING_MODAL'}
 
 
 class BonezMo3D(BazeMo):
@@ -276,21 +213,6 @@ class BonezMo3D(BazeMo):
 
     def modal(self, context, event, tweak):
         return {'FINISHED'}
-
-
-class GrouzMo2D(GizmoGroup):
-    def __init__(self):
-        raise NotImplementedError
-
-    def draw_prepare(self, context):
-        """align gizmos with view"""
-        view_matrix = context.area.spaces.active.region_3d.view_matrix.normalized()
-        # view_matrix.translation = context.area.spaces.active.region_3d.view_location
-        giz_matrix = Matrix()
-        giz_matrix.translation = Vector([1/context.area.spaces.active.region_3d.view_distance, 0, 0]) @ view_matrix# @ context.area.spaces.active.region_3d.window_matrix
-
-        for gizmo in self.gizmos:
-            gizmo.matrix_space = giz_matrix
 
 
 class GrouzMo(GizmoGroup):
@@ -448,7 +370,7 @@ class GrouzMoRoots(GizmoGroup):
             self.setup(context)
             GrouzMoRoots._dirty = False
 
-        for gizmo in reversed(self.gizmos):
+        for gizmo in self.gizmos:
             gizmo.refresh_shape()
 
     def clear(self):

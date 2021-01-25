@@ -20,6 +20,9 @@ class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
         row.prop(context.object.data, 'pizmo_armature_widget')
 
         row = layout.row()
+        row.prop_search(context.object.data, 'pizmo_armature_root', context.object.data, "bones", text="Root bone")
+
+        row = layout.row()
         row.label(text="Widget Colors")
 
         row = layout.row()

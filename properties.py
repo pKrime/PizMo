@@ -62,6 +62,10 @@ def register_armature_properties():
                                                        default=False,
                                                        update=wizmo.GrouzMoRoots.mark_dirty)
 
+    armature_type.pizmo_armature_root = StringProperty(name="Armature Root Bone",
+                                                      description="Bone that marks armature position in space",
+                                                      update=wizmo.GrouzMoRoots.mark_dirty)
+
     armature_type.pizmo_color_base = FloatVectorProperty(name="Widgets Base Color",
                                                          subtype='COLOR',
                                                          default=[0.1, 0.1, 0.1],
@@ -111,3 +115,4 @@ def unregister_properties():
     del bpy.types.Armature.pizmo_color_alpha
     del bpy.types.Armature.pizmo_color_selected
     del bpy.types.Armature.pizmo_widget_scale
+    del bpy.types.Armature.pizmo_armature_root
