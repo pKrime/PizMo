@@ -53,19 +53,25 @@ class ArmzMo(BazeMo):
 
     __slots__ = (
         "_custom_shape",
-        "bone_name",
-        "_object",
+        "_object_name",
     )
 
     def refresh_shape(self):
         # show armature select widget for all other armatures when in pose mode, all armatures when in object mode
-        if bpy.context.mode == 'POSE':
-            self.hide = self._object == bpy.context.object
+        obj = self.get_object()
+        if not obj:
+            return
 
-            p_bone = self._object.pose.bones[self.bone_name]
-            self.matrix_space = p_bone.matrix
+        if bpy.context.mode == 'POSE':
+            self.hide = obj == bpy.context.object
         else:
-            self.hide = not self._object.visible_get()
+            self.hide = not obj.visible_get()
+
+        if not self.hide:
+            bound = obj.bound_box
+            self.matrix_space[0][3] = (bound[0][0] + bound[7][0]) / 2
+            self.matrix_space[1][3] = (bound[0][1] + bound[7][1]) / 2
+            self.matrix_space[2][3] = bound[0][2] # bbox min Z
 
     def draw(self, context):
         self.draw_custom_shape(self.custom_shape)
@@ -73,25 +79,38 @@ class ArmzMo(BazeMo):
     def draw_select(self, context, select_id):
         self.draw_custom_shape(self.custom_shape, select_id=select_id)
 
-    def invoke(self, context, event):
-        if self._object:
-            bpy.ops.object.mode_set(mode='OBJECT')
-            bpy.ops.object.select_all(action='DESELECT')
-            try:
-                self._object.select_set(True)
-            except ReferenceError:
-                self.to_delete = True
-                return {'FINISHED'}
+    def get_object(self):
+        if not self._object_name:
+            return None
+        try:
+            obj = bpy.data.objects[self._object_name]
+        except KeyError:
+            return None
 
-            bpy.context.view_layer.objects.active = self._object
-            bpy.ops.object.mode_set(mode='POSE')
+        if obj.type != 'ARMATURE':
+            return None
+
+        return obj
+
+    def invoke(self, context, event):
+        obj = self.get_object()
+        if not obj:
+            self.to_delete = True
+            return {'FINISHED'}
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+
+        obj.select_set(True)
+
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode='POSE')
         return {'RUNNING_MODAL'}
 
     def modal(self, context, event, tweak):
         return {'FINISHED'}
 
     def setup(self):
-        self.bone_name = ''
         self.refresh_color()
 
         if not hasattr(self, "custom_shape"):
@@ -101,14 +120,8 @@ class ArmzMo(BazeMo):
         self.use_draw_scale = False
         self.use_draw_offset_scale = False
 
-    def set_object(self, obj, bone_name=""):
-        self._object = obj
-
-        if bone_name:
-            self.bone_name = bone_name
-        else:
-            # TODO: pick lowest bone in separate func
-            self.bone_name = next((bone.name for bone in obj.pose.bones if not bone.parent), None)
+    def set_object(self, obj):
+        self._object_name = obj.name
 
 
 class BonezMo(BazeMo):
