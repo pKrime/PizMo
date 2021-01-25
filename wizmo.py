@@ -152,8 +152,11 @@ class BonezMo3D(BazeMo):
 
     def bone_is_visible(self, context):
         bone = context.object.data.bones[self.bone_name]
-        layers = [i for i, layer in enumerate(bone.layers) if layer]
+        if bone.hide:
+            return False
 
+        # layer visibility
+        layers = [i for i, layer in enumerate(bone.layers) if layer]
         return any([context.object.data.layers[i] for i in layers])
 
     def setup(self):
