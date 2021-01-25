@@ -37,21 +37,17 @@ reload(wizmo)
 reload(properties)
 reload(ui)
 
-from .wizmo import BonezMo, BonezMo3D, ArmzMo
+from .wizmo import BonezMo3D, ArmzMo
 from .wizmo import GrouzMo, GrouzMoRoots
 from .ui import BONE_PT_pizmo_properties
 from .ui import ARMATURE_PT_pizmo_properties
 
 
-
 # REGISTER #
-
-
 def register():
     properties.register_properties()
 
     bpy.utils.register_class(ArmzMo)
-    bpy.utils.register_class(BonezMo)
     bpy.utils.register_class(BonezMo3D)
     bpy.utils.register_class(GrouzMo)
     bpy.utils.register_class(GrouzMoRoots)
@@ -64,7 +60,6 @@ def unregister():
     bpy.utils.unregister_class(BONE_PT_pizmo_properties)
     bpy.utils.unregister_class(GrouzMoRoots)
     bpy.utils.unregister_class(GrouzMo)
-    bpy.utils.unregister_class(BonezMo)
     bpy.utils.unregister_class(BonezMo3D)
     bpy.utils.unregister_class(ArmzMo)
 

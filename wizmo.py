@@ -141,6 +141,7 @@ class BonezMo3D(BazeMo):
     __slots__ = (
         "custom_shape",
         "bone_name",
+        "bone_follow",
         "_meshshape",
     )
 
@@ -160,6 +161,9 @@ class BonezMo3D(BazeMo):
         return any([context.object.data.layers[i] for i in layers])
 
     def setup(self):
+        self._meshshape = None
+        self.bone_follow = False
+
         self.refresh_color()
 
         self.use_draw_modal = True
@@ -167,6 +171,9 @@ class BonezMo3D(BazeMo):
         self.use_draw_offset_scale = False
 
     def refresh_shape(self, context):
+        if self.bone_follow:
+            self.matrix_space = context.object.pose.bones[self.bone_name].matrix
+
         if not self._meshshape:
             return
 
@@ -188,6 +195,10 @@ class BonezMo3D(BazeMo):
         self._meshshape = MeshShape3D(obj, scale=widget_scale, vertex_groups=v_grps, weight_threshold=weight_threshold)
         if len(self._meshshape.vertices) > 2:
             self.refresh_shape(None)
+
+    def set_custom_shape(self, vertices):
+        self._meshshape = None
+        self.custom_shape = self.new_custom_shape('TRIS', vertices)
 
     def set_bone(self, bone):
         self.bone_name = bone.name
@@ -260,7 +271,7 @@ class GrouzMo(GizmoGroup):
                     continue
 
                 wdg_verts = wdg_shape.frame_vertices() if bone.pizmo_shape_frame else wdg_shape.vertices
-                mpr = self.gizmos.new(BonezMo.bl_idname)
+                mpr = self.gizmos.new(BonezMo3D.bl_idname)
                 mpr.set_custom_shape(wdg_verts)
                 mpr.bone_follow = bone.pizmo_bone_follow
                 mpr.set_bone(bone)
@@ -290,10 +301,10 @@ class GrouzMo(GizmoGroup):
                     mesh_obj = widget.data.get('object', tallest)
                     mpr.set_object(mesh_obj, v_grp=v_grp)
                 elif widget.shape == ShapeType.RECT:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr = self.gizmos.new(BonezMo3D.bl_idname)
                     mpr.set_custom_shape(shapes.Rect2D.vertices)
                 elif widget.shape == ShapeType.QUAD:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr = self.gizmos.new(BonezMo3D.bl_idname)
                     if widget.data.get('frame'):
                         mpr.set_custom_shape(shapes.Quad2D().frame_vertices())
                     else:
@@ -301,7 +312,7 @@ class GrouzMo(GizmoGroup):
                     if widget.data.get('bone_follow'):
                         mpr.bone_follow = True
                 else:
-                    mpr = self.gizmos.new(BonezMo.bl_idname)
+                    mpr = self.gizmos.new(BonezMo3D.bl_idname)
 
                 mpr.set_bone(context.object.pose.bones[bone_name])
             if mpr:
