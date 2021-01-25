@@ -60,6 +60,7 @@ class ArmzMo(BazeMo):
         # show armature select widget for all other armatures when in pose mode, all armatures when in object mode
         obj = self.get_object()
         if not obj:
+            # FIXME: what if armature has been renamed
             return
 
         if bpy.context.mode == 'POSE':
