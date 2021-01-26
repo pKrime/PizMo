@@ -88,3 +88,7 @@ class BONE_PT_pizmo_properties(bpy.types.Panel):
             row.prop(pbone, 'pizmo_shape_frame')
             row = layout.row()
             row.prop(pbone, 'pizmo_bone_follow')
+            row = layout.row()
+            row.prop(pbone, 'pizmo_shape_scale')
+            row = layout.row()
+            row.prop(pbone, 'pizmo_shape_offset')

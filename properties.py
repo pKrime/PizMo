@@ -21,6 +21,7 @@ def register_bone_properties():
 
     shape_types = (
         ("circle", "Circle", "Circle Shape"),
+        ("sphere", "Sphere", "Sphere Shape"),
         ("quad", "Quad", "Quad Shape"),
         ('none', "None", "No Shape"),
     )
@@ -32,6 +33,15 @@ def register_bone_properties():
     bpy.types.PoseBone.pizmo_vis_shape = EnumProperty(items=shape_types,
                                                       name="Shape Type",
                                                       default='none')
+
+    bpy.types.PoseBone.pizmo_shape_scale = FloatProperty(name="Scale of widget shape",
+                                                            description="Scale the widget",
+                                                            min=0.0, max=1.0, default=1.0,
+                                                            update=wizmo.GrouzMo.mark_dirty)
+
+    bpy.types.PoseBone.pizmo_shape_offset = FloatVectorProperty(name="Widgets Offset",
+                                                                default=[0.0, 0.0, 0.0],
+                                                                )
 
     bpy.types.PoseBone.pizmo_shape_frame = BoolProperty(name="Use Frame",
                                                         default=False)
@@ -110,6 +120,8 @@ def unregister_properties():
     del bpy.types.PoseBone.pizmo_vis_type
     del bpy.types.PoseBone.pizmo_vis_shape
     del bpy.types.PoseBone.pizmo_shape_frame
+    del bpy.types.PoseBone.pizmo_shape_scale
+    del bpy.types.PoseBone.pizmo_shape_offset
 
     del bpy.types.PoseBone.pizmo_vis_mesh
     del bpy.types.PoseBone.pizmo_vert_grp

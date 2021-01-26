@@ -269,6 +269,8 @@ class GrouzMo(GizmoGroup):
                     wdg_shape = shapes.Quad2D()
                 elif bone.pizmo_vis_shape == 'circle':
                     wdg_shape = shapes.Circle2D()
+                elif bone.pizmo_vis_shape == 'sphere':
+                    wdg_shape = shapes.Sphere(scale=bone.pizmo_shape_scale, offset=bone.pizmo_shape_offset)
                 else:
                     # TODO: report warning
                     print("coudl not generate shape", bone.pizmo_vis_shape, "for", bone.name)

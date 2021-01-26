@@ -150,6 +150,89 @@ class Circle2D(BasicShape):
         return verts
 
 
+class Sphere(BasicShape):
+    def __init__(self, scale=1.0, offset=(0.0, 0.0, 0.0), segments=24, rings=12):
+        self.segments = segments
+        self.vertices = []
+
+        full_circle = 2 * pi
+        arc_len = full_circle / self.segments
+
+        circle_verts = []
+        for i in range(self.segments):
+            arc = arc_len * i
+            circle_verts.append([cos(arc), sin(arc), 0.0])
+            arc = arc_len * (i + 1)
+            circle_verts.append([cos(arc), sin(arc), 0.0])
+            circle_verts.append([0.0, 0.0, 0.0])
+
+        upper = None
+
+        # TODO: better way of drawing a sphere
+        prev_height = 0
+        next_height = 0
+        prev_scale = scale
+        for _ in range(int(rings/2)):
+            next_height += 2 / rings
+            next_scale = sqrt(1 - next_height ** 2) * scale
+            for circle_vert in circle_verts:
+                if upper:
+                    self.vertices.append([circle_vert[0] * prev_scale, circle_vert[1] * prev_scale, prev_height * scale])
+                    self.vertices.append(upper)
+
+                self.vertices.append([circle_vert[0] * prev_scale, circle_vert[1] * prev_scale, prev_height * scale])
+                upper = [circle_vert[0] * next_scale, circle_vert[1] * next_scale, next_height * scale]
+                self.vertices.append(upper)
+            prev_height = next_height
+            prev_scale = next_scale
+
+        prev_height = 0
+        next_height = 0
+        prev_scale = scale
+        for _ in range(int(rings / 2)):
+            next_height -= 2 / rings
+            next_scale = sqrt(1 - next_height ** 2) * scale
+            for circle_vert in circle_verts:
+                if upper:
+                    self.vertices.append([circle_vert[0] * prev_scale, circle_vert[1] * prev_scale, prev_height * scale])
+                    self.vertices.append(upper)
+
+                self.vertices.append([circle_vert[0] * prev_scale, circle_vert[1] * prev_scale, prev_height * scale])
+                upper = [circle_vert[0] * next_scale, circle_vert[1] * next_scale, next_height * scale]
+                self.vertices.append(upper)
+            prev_height = next_height
+            prev_scale = next_scale
+
+        self.offset(offset)
+
+    def offset(self, offset):
+        for i, vert in enumerate(self.vertices):
+            self.vertices[i] = deepcopy(vert)
+            for j, offs in enumerate(offset):
+                self.vertices[i][j] += offs
+
+    @property
+    def size(self):
+        vert = self.vertices[0]
+        diameter = sqrt(pow(vert[0], 2) + pow(vert[1], 2))
+        return diameter, diameter
+
+    def frame_vertices(self, thickness=0.25):
+        scale = 1 - thickness
+        verts = []
+
+        inner = None
+        for vert in self.vertices:
+            if inner:
+                verts.append(vert)
+                verts.append(inner)
+            verts.append(vert)
+            inner = [vert[0] * scale, vert[1] * scale]
+            verts.append(inner)
+
+        return verts
+
+
 class MeshShape3D(BasicShape):
 
     def __init__(self, mesh, scale=1.0, vertex_groups=None, weight_threshold=0.2):
