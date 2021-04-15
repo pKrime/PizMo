@@ -109,7 +109,10 @@ class ArmzMo(BazeMo):
             self.to_delete = True
             return {'FINISHED'}
 
-        bpy.ops.object.mode_set(mode='OBJECT')
+        try:
+            bpy.ops.object.mode_set(mode='OBJECT')
+        except RuntimeError:
+            pass
         bpy.ops.object.select_all(action='DESELECT')
 
         obj.select_set(True)
