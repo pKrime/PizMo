@@ -246,7 +246,8 @@ class BonezMo3D(BazeMo):
 
         # Screen coordinates conversion
         view_matrix = context.area.spaces.active.region_3d.view_matrix
-        screen_delta = (Vector([delta_x, delta_y, 0]) @ view_matrix)
+        screen_delta = Vector([delta_x, delta_y, 0]) @ view_matrix
+        screen_delta = screen_delta @ bone.matrix
 
         for i, d in enumerate(screen_delta):
             if not bone.lock_location[i]:
