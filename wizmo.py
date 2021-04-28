@@ -146,6 +146,8 @@ class BonezMo3D(BazeMo):
         "bone_name",
         "bone_follow",
         "_meshshape",
+        "init_mouse_x",
+        "init_mouse_y"
     )
 
     def draw(self, context):
@@ -223,13 +225,32 @@ class BonezMo3D(BazeMo):
         bones = context.object.data.bones
         bones.active = bones[bone.name]
 
+        self.init_mouse_x = event.mouse_x
+        self.init_mouse_y = event.mouse_y
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
-        return {'FINISHED'}
+        delta_x = (event.mouse_x - self.init_mouse_x) / 1000.0
+        delta_y = (event.mouse_y - self.init_mouse_y) / 1000.0
+        if 'SNAP' in tweak:
+            delta_y = round(delta_y)
+        if 'PRECISE' in tweak:
+            delta_y /= 10.0
+
+        bone = context.object.pose.bones[self.bone_name]
+
+        # TODO: screen coordinates conversion
+        if not bone.lock_location[0]:
+            bone.location[0] += delta_x
+        if not bone.lock_location[2]:
+            bone.location[2] += delta_y
+
+        self.refresh_shape(context)
+        return {'RUNNING_MODAL'}
+
 
 
 class GrouzMo(GizmoGroup):
