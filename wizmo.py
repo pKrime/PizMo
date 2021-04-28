@@ -236,17 +236,21 @@ class BonezMo3D(BazeMo):
         delta_x = (event.mouse_x - self.init_mouse_x) / 1000.0
         delta_y = (event.mouse_y - self.init_mouse_y) / 1000.0
         if 'SNAP' in tweak:
+            delta_x = round(delta_x)
             delta_y = round(delta_y)
         if 'PRECISE' in tweak:
-            delta_y /= 10.0
+            delta_x /= 100.0
+            delta_y /= 100.0
 
         bone = context.object.pose.bones[self.bone_name]
 
-        # TODO: screen coordinates conversion
-        if not bone.lock_location[0]:
-            bone.location[0] += delta_x
-        if not bone.lock_location[2]:
-            bone.location[2] += delta_y
+        # Screen coordinates conversion
+        view_matrix = context.area.spaces.active.region_3d.view_matrix
+        screen_delta = (Vector([delta_x, delta_y, 0]) @ view_matrix)
+
+        for i, d in enumerate(screen_delta):
+            if not bone.lock_location[i]:
+                bone.location[i] += d
 
         self.refresh_shape(context)
         return {'RUNNING_MODAL'}
