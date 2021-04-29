@@ -5,6 +5,7 @@ from bpy.types import (
     GizmoGroup,
 )
 
+from math import sqrt
 from mathutils import Matrix, Vector
 
 from . import shapes
@@ -138,6 +139,32 @@ class ArmzMo(BazeMo):
         self._object_name = obj.name
 
 
+def calctrackballvec(rect, event_xy, radius=1.1):
+    """Return trackball vector for given rectangle, x,y and radius"""
+    # from blender/source/blender/editors/space_view3d/view3d_edit.c
+    t = radius / 1.41421356237309504880  # sqrt(2)
+
+    # Aspect correct so dragging in a non-square view doesn't squash the direction.
+    # So diagonal motion rotates the same direction the cursor is moving.
+
+    size_min = min(rect.size_xy)
+    aspect_x, aspect_y = [size_min / s for s in rect.size_xy]
+
+    # Normalize x and y
+    vec_x = event_xy[0] - rect.cent_x / rect.size_x * aspect_x / 2.0
+    vec_y = event_xy[1] - rect.cent_y / rect.size_y * aspect_y / 2.0
+
+    d = Vector(vec_x, vec_y).magnitude
+    if d < t:
+        # Inside sphere
+        vec_z = sqrt(pow(radius, 2) - pow(d, 2))
+    else:
+        # On hyperbola
+        vec_z = pow(t, 2) / d
+
+    return vec_x, vec_y, vec_z
+
+
 class BonezMo3D(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_bone3d"
 
@@ -233,6 +260,10 @@ class BonezMo3D(BazeMo):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
+        bone = context.object.pose.bones[self.bone_name]
+        if bone.pizmo_drag_action == "none":
+            return {'FINISHED'}
+
         delta_x = (event.mouse_x - self.init_mouse_x) / 100
         delta_y = (event.mouse_y - self.init_mouse_y) / 100
         if 'SNAP' in tweak:
@@ -242,16 +273,27 @@ class BonezMo3D(BazeMo):
             delta_x /= 10.0
             delta_y /= 10.0
 
-        bone = context.object.pose.bones[self.bone_name]
-
         # Screen coordinates conversion
         view_matrix = context.area.spaces.active.region_3d.view_matrix
         screen_delta = Vector([delta_x, delta_y, 0]) @ view_matrix
-        screen_delta = screen_delta @ bone.matrix
 
-        for i, d in enumerate(screen_delta):
-            if not bone.lock_location[i]:
-                bone.location[i] += d
+        if bone.pizmo_drag_action == "translate":
+            screen_delta = screen_delta @ bone.matrix
+            for i, d in enumerate(screen_delta):
+                if not bone.lock_location[i]:
+                    bone.location[i] += d
+        elif bone.pizmo_drag_action == "rotate":
+            # TODO
+            #calctrackballvec()
+            pass
+        else:
+            diagonal = Vector((delta_x, delta_y))
+            diagonal.normalize()
+            scale = 1.0 + diagonal.dot(Vector((1.0, 0.0))) / 10
+
+            for i in range(3):
+                if not bone.lock_scale[i]:
+                    bone.scale[i] *= scale
 
         self.init_mouse_x = event.mouse_x
         self.init_mouse_y = event.mouse_y

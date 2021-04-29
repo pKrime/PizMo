@@ -26,12 +26,23 @@ def register_bone_properties():
         ('none', "None", "No Shape"),
     )
 
+    drag_action = (
+        ("none", "None", "Drag doesn't do anything"),
+        ("translate", "Translate", "Drag to translate"),
+        ("rotate", "Rotate", "Drag to rotate"),
+        ("scale", "Scale", "Drag to scale"),
+    )
+
     bpy.types.PoseBone.pizmo_vis_type = EnumProperty(items=display_types,
                                                      name="Display Type",
                                                      default=None)
 
     bpy.types.PoseBone.pizmo_vis_shape = EnumProperty(items=shape_types,
                                                       name="Shape Type",
+                                                      default='none')
+
+    bpy.types.PoseBone.pizmo_drag_action = EnumProperty(items=drag_action,
+                                                      name="Drag Action",
                                                       default='none')
 
     bpy.types.PoseBone.pizmo_shape_scale = FloatProperty(name="Scale of widget shape",
@@ -119,6 +130,7 @@ def unregister_properties():
 
     del bpy.types.PoseBone.pizmo_vis_type
     del bpy.types.PoseBone.pizmo_vis_shape
+    del bpy.types.PoseBone.pizmo_drag_action
     del bpy.types.PoseBone.pizmo_shape_frame
     del bpy.types.PoseBone.pizmo_shape_scale
     del bpy.types.PoseBone.pizmo_shape_offset
