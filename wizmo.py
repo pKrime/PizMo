@@ -233,14 +233,14 @@ class BonezMo3D(BazeMo):
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
-        delta_x = (event.mouse_x - self.init_mouse_x) / 1000.0
-        delta_y = (event.mouse_y - self.init_mouse_y) / 1000.0
+        delta_x = (event.mouse_x - self.init_mouse_x) / 100
+        delta_y = (event.mouse_y - self.init_mouse_y) / 100
         if 'SNAP' in tweak:
             delta_x = round(delta_x)
             delta_y = round(delta_y)
         if 'PRECISE' in tweak:
-            delta_x /= 100.0
-            delta_y /= 100.0
+            delta_x /= 10.0
+            delta_y /= 10.0
 
         bone = context.object.pose.bones[self.bone_name]
 
@@ -253,6 +253,8 @@ class BonezMo3D(BazeMo):
             if not bone.lock_location[i]:
                 bone.location[i] += d
 
+        self.init_mouse_x = event.mouse_x
+        self.init_mouse_y = event.mouse_y
         self.refresh_shape(context)
         return {'RUNNING_MODAL'}
 
