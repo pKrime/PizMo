@@ -205,6 +205,7 @@ class BonezMo3D(BazeMo):
         "_init_trackvec",
         "_init_origin_x",
         "_init_origin_y",
+        "_init_matrix",
     )
 
     def draw(self, context):
@@ -294,9 +295,11 @@ class BonezMo3D(BazeMo):
         self._init_trackvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
         self._init_origin_x = origin[0]
         self._init_origin_y = origin[1]
+        self._init_matrix = context.object.pose.bones[bone.name].matrix.copy()
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
+        self.hide = False
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
@@ -304,6 +307,7 @@ class BonezMo3D(BazeMo):
         if bone.pizmo_drag_action == "none":
             return {'FINISHED'}
 
+        self.hide = True
         delta_x = (event.mouse_x - self._init_mouse_x) / 100
         delta_y = (event.mouse_y - self._init_mouse_y) / 100
         if 'SNAP' in tweak:
@@ -326,27 +330,27 @@ class BonezMo3D(BazeMo):
             self._init_mouse_x = event.mouse_x
             self._init_mouse_y = event.mouse_y
         elif bone.pizmo_drag_action == "rotate":
+            # TODO: look-at based system
             rect = DragRect(self._init_origin_x, self._init_origin_y, event.mouse_x, event.mouse_y)
             if rect.width and rect.height:
-                    newvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
-                    dvec = newvec - self._init_trackvec
-                    angle = dvec.magnitude / (2.0 * 1.1)
-                    angle *= pi
+                abs_dx = abs(delta_x)
+                abs_dy = abs(delta_y)
 
-                    # Before applying the sensitivity this is rotating 1:1,
-                    # * where the cursor would match the surface of a sphere in the view. */
-                    angle *= 0.0005
+                use_x = abs_dx > abs_dy
+                if use_x:
+                    axis = Vector((0.0, -1.0, 0.0))
+                    angle = delta_x
+                else:
+                    axis = Vector((-1.0, 0.0, 0.0))
+                    angle = delta_y
 
-                    #  Allow for rotation beyond the interval [-pi, pi] */
-                    angle = angle_wrap_rad(angle)
-                    # This relation is used instead of the actual angle between vectors
-                    # so that the angle of rotation is linearly proportional to
-                    # the distance that the mouse is dragged.
+                angle *= 0.2
 
-                    axis = self._init_trackvec.cross(newvec)
-                    rot = Quaternion(axis, angle)
+                axis = axis @ region_3d.view_matrix.to_3x3()
+                axis = self._init_matrix.to_3x3() @ axis
 
-                    bone.rotation_quaternion.rotate(rot)
+                rot = Quaternion(axis, angle)
+                bone.rotation_quaternion.rotate(rot)
         else:
             # scale
             diagonal = Vector((delta_x, delta_y))
@@ -357,8 +361,6 @@ class BonezMo3D(BazeMo):
                 if not bone.lock_scale[i]:
                     bone.scale[i] *= scale
 
-
-        self.refresh_shape(context)
         return {'RUNNING_MODAL'}
 
 
