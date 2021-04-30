@@ -173,8 +173,8 @@ class DragRect:
         self._btm_right_x = bottom_right_x
         self._btm_right_y = bottom_right_y
 
-        self.height = abs(top_left_y - bottom_right_y)
-        self.width = abs(top_left_x - bottom_right_x)
+        self.height = top_left_y - bottom_right_y
+        self.width = top_left_x - bottom_right_x
 
         self.center = (top_left_x + bottom_right_x) / 2, (top_left_y + bottom_right_y) / 2
 
@@ -202,7 +202,9 @@ class BonezMo3D(BazeMo):
         "_meshshape",
         "_init_mouse_x",
         "_init_mouse_y",
-        "_init_trackvec"
+        "_init_trackvec",
+        "_init_origin_x",
+        "_init_origin_y",
     )
 
     def draw(self, context):
@@ -290,6 +292,8 @@ class BonezMo3D(BazeMo):
         self._init_mouse_x = event.mouse_x
         self._init_mouse_y = event.mouse_y
         self._init_trackvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
+        self._init_origin_x = origin[0]
+        self._init_origin_y = origin[1]
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
@@ -322,7 +326,7 @@ class BonezMo3D(BazeMo):
             self._init_mouse_x = event.mouse_x
             self._init_mouse_y = event.mouse_y
         elif bone.pizmo_drag_action == "rotate":
-            rect = DragRect(self._init_mouse_x, self._init_mouse_y, event.mouse_x, event.mouse_y)
+            rect = DragRect(self._init_origin_x, self._init_origin_y, event.mouse_x, event.mouse_y)
             if rect.width and rect.height:
                     newvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
                     dvec = newvec - self._init_trackvec
@@ -337,7 +341,7 @@ class BonezMo3D(BazeMo):
                     angle = angle_wrap_rad(angle)
                     # This relation is used instead of the actual angle between vectors
                     # so that the angle of rotation is linearly proportional to
-                    # the distance that the mouse is dragged. */
+                    # the distance that the mouse is dragged.
 
                     axis = self._init_trackvec.cross(newvec)
                     rot = Quaternion(axis, angle)
