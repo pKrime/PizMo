@@ -180,7 +180,7 @@ class DragRect:
 
     def __str__(self):
         return f"top: ({self._top_left_x}, {self._top_left_y}), btm: ({self._btm_right_x}, {self._btm_right_y})," \
-               f" center: {self.center})"
+               f" center: {self.center}, h: {self.height}, w: {self.width}"
 
 
 def mod(a, b):
@@ -285,7 +285,7 @@ class BonezMo3D(BazeMo):
 
         origin = prj_mat @ bone.head_local
 
-        rect = DragRect(origin[1], origin[0], event.mouse_x, event.mouse_y)
+        rect = DragRect(origin[0], origin[1], event.mouse_x, event.mouse_y)
 
         self._init_mouse_x = event.mouse_x
         self._init_mouse_y = event.mouse_y
@@ -310,8 +310,8 @@ class BonezMo3D(BazeMo):
             delta_y /= 10.0
 
         # Screen coordinates conversion
-        view_matrix = context.area.spaces.active.region_3d.view_matrix
-        screen_delta = Vector([delta_x, delta_y, 0]) @ view_matrix
+        region_3d = context.area.spaces.active.region_3d
+        screen_delta = Vector([delta_x, delta_y, 0]) @ region_3d.view_matrix
 
         if bone.pizmo_drag_action == "translate":
             screen_delta = screen_delta @ bone.matrix
@@ -326,11 +326,12 @@ class BonezMo3D(BazeMo):
             if rect.width and rect.height:
                     newvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
                     dvec = newvec - self._init_trackvec
-                    angle = (dvec.magnitude / 2.0 * 1.1) * pi
+                    angle = dvec.magnitude / (2.0 * 1.1)
+                    angle *= pi
 
                     # Before applying the sensitivity this is rotating 1:1,
                     # * where the cursor would match the surface of a sphere in the view. */
-                    angle *= 0.0001
+                    angle *= 0.0005
 
                     #  Allow for rotation beyond the interval [-pi, pi] */
                     angle = angle_wrap_rad(angle)
@@ -341,6 +342,7 @@ class BonezMo3D(BazeMo):
 
                     axis = self._init_trackvec.cross(newvec)
                     rot = Quaternion(axis, angle)
+
                     bone.rotation_quaternion.rotate(rot)
         else:
             # scale
