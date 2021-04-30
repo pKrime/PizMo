@@ -333,9 +333,6 @@ class BonezMo3D(BazeMo):
                     # * where the cursor would match the surface of a sphere in the view. */
                     angle *= 0.0005
 
-                    print(rect)
-                    print(angle)
-
                     #  Allow for rotation beyond the interval [-pi, pi] */
                     angle = angle_wrap_rad(angle)
                     # This relation is used instead of the actual angle between vectors
