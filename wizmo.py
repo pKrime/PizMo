@@ -178,6 +178,10 @@ class DragRect:
 
         self.center = (top_left_x + bottom_right_x) / 2, (top_left_y + bottom_right_y) / 2
 
+    def __str__(self):
+        return f"top: ({self._top_left_x}, {self._top_left_y}), btm: ({self._btm_right_x}, {self._btm_right_y})," \
+               f" center: {self.center})"
+
 
 def angle_wrap_rad(angle):
     """Allow for rotation beyond the interval [-pi, pi]"""
@@ -311,6 +315,9 @@ class BonezMo3D(BazeMo):
             for i, d in enumerate(screen_delta):
                 if not bone.lock_location[i]:
                     bone.location[i] += d
+
+            self._init_mouse_x = event.mouse_x
+            self._init_mouse_y = event.mouse_y
         elif bone.pizmo_drag_action == "rotate":
             rect = DragRect(self._init_mouse_x, self._init_mouse_y, event.mouse_x, event.mouse_y)
             if rect.width and rect.height:
@@ -331,6 +338,11 @@ class BonezMo3D(BazeMo):
 
                     axis = self._init_trackvec.cross(newvec)
 
+                    print("rect", rect)
+                    print("ax", axis)
+                    print("ang", angle)
+                    print("")
+
                     rot = Quaternion(axis, angle)
                     bone.rotation_quaternion.rotate(rot)
         else:
@@ -343,8 +355,7 @@ class BonezMo3D(BazeMo):
                 if not bone.lock_scale[i]:
                     bone.scale[i] *= scale
 
-        self._init_mouse_x = event.mouse_x
-        self._init_mouse_y = event.mouse_y
+
         self.refresh_shape(context)
         return {'RUNNING_MODAL'}
 
