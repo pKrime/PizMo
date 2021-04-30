@@ -203,8 +203,6 @@ class BonezMo3D(BazeMo):
         "_init_mouse_x",
         "_init_mouse_y",
         "_init_trackvec",
-        "_init_origin_x",
-        "_init_origin_y",
         "_init_matrix",
     )
 
@@ -292,9 +290,6 @@ class BonezMo3D(BazeMo):
 
         self._init_mouse_x = event.mouse_x
         self._init_mouse_y = event.mouse_y
-        self._init_trackvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
-        self._init_origin_x = origin[0]
-        self._init_origin_y = origin[1]
         self._init_matrix = context.object.pose.bones[bone.name].matrix.copy()
         return {'RUNNING_MODAL'}
 
@@ -330,27 +325,24 @@ class BonezMo3D(BazeMo):
             self._init_mouse_x = event.mouse_x
             self._init_mouse_y = event.mouse_y
         elif bone.pizmo_drag_action == "rotate":
-            # TODO: look-at based system
-            rect = DragRect(self._init_origin_x, self._init_origin_y, event.mouse_x, event.mouse_y)
-            if rect.width and rect.height:
-                abs_dx = abs(delta_x)
-                abs_dy = abs(delta_y)
+            # compute new look-at
+            t_mat = self._init_matrix.to_3x3().transposed()
+            y_axis = t_mat[1]
+            z_axis = t_mat[2]
 
-                use_x = abs_dx > abs_dy
-                if use_x:
-                    axis = Vector((0.0, -1.0, 0.0))
-                    angle = delta_x
-                else:
-                    axis = Vector((-1.0, 0.0, 0.0))
-                    angle = delta_y
+            new_y_axis = y_axis + screen_delta
+            new_y_axis.normalize()
 
-                angle *= 0.2
+            new_x_axis = new_y_axis.cross(z_axis)
+            new_x_axis.normalize()
+            new_z_axis = new_x_axis.cross(new_y_axis)
+            new_z_axis.normalize()
 
-                axis = axis @ region_3d.view_matrix.to_3x3()
-                axis = self._init_matrix.to_3x3() @ axis
+            new_mat = Matrix((new_x_axis, new_y_axis, new_z_axis)).transposed()
+            new_mat = new_mat.to_4x4()
+            new_mat.translation = self._init_matrix.translation
 
-                rot = Quaternion(axis, angle)
-                bone.rotation_quaternion.rotate(rot)
+            bone.matrix = new_mat
         else:
             # scale
             diagonal = Vector((delta_x, delta_y))
