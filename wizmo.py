@@ -202,7 +202,6 @@ class BonezMo3D(BazeMo):
         "_meshshape",
         "_init_mouse_x",
         "_init_mouse_y",
-        "_init_trackvec",
         "_init_matrix",
     )
 
@@ -280,13 +279,6 @@ class BonezMo3D(BazeMo):
         bone.select = True
         bones = context.object.data.bones
         bones.active = bones[bone.name]
-
-        region_3d = context.area.spaces.active.region_3d
-        prj_mat = region_3d.window_matrix @ region_3d.view_matrix @ region_3d.perspective_matrix
-
-        origin = prj_mat @ bone.head_local
-
-        rect = DragRect(origin[0], origin[1], event.mouse_x, event.mouse_y)
 
         self._init_mouse_x = event.mouse_x
         self._init_mouse_y = event.mouse_y
