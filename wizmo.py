@@ -183,10 +183,13 @@ class DragRect:
                f" center: {self.center})"
 
 
+def mod(a, b):
+  return a - (b * int(a / b))
+
+
 def angle_wrap_rad(angle):
     """Allow for rotation beyond the interval [-pi, pi]"""
-    return Vector((angle + pi, pi * 2.0)).magnitude - pi
-
+    return mod(angle + pi, pi * 2.0) - pi
 
 
 class BonezMo3D(BazeMo):
@@ -323,26 +326,20 @@ class BonezMo3D(BazeMo):
             if rect.width and rect.height:
                     newvec = Vector(calctrackballvec(rect, (event.mouse_x, event.mouse_y)))
                     dvec = newvec - self._init_trackvec
-                    angle = dvec.magnitude / 2.0 * 1.1 * pi
+                    angle = (dvec.magnitude / 2.0 * 1.1) * pi
 
                     # Before applying the sensitivity this is rotating 1:1,
                     # * where the cursor would match the surface of a sphere in the view. */
                     angle *= 0.0001
 
                     #  Allow for rotation beyond the interval [-pi, pi] */
-                    #angle = angle_wrap_rad(angle)
+                    angle = angle_wrap_rad(angle)
 
                     # This relation is used instead of the actual angle between vectors
                     # so that the angle of rotation is linearly proportional to
                     # the distance that the mouse is dragged. */
 
                     axis = self._init_trackvec.cross(newvec)
-
-                    print("rect", rect)
-                    print("ax", axis)
-                    print("ang", angle)
-                    print("")
-
                     rot = Quaternion(axis, angle)
                     bone.rotation_quaternion.rotate(rot)
         else:
