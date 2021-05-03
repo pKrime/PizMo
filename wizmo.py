@@ -5,8 +5,7 @@ from bpy.types import (
     GizmoGroup,
 )
 
-from math import pi
-from math import sqrt
+from bpy_extras.view3d_utils import location_3d_to_region_2d
 from mathutils import Matrix, Vector, Quaternion
 
 from . import shapes
@@ -140,58 +139,6 @@ class ArmzMo(BazeMo):
         self._object_name = obj.name
 
 
-def calctrackballvec(rect, event_xy, radius=1.1):
-    """Return trackball vector for given rectangle, x,y and radius"""
-    # from blender/source/blender/editors/space_view3d/view3d_edit.c
-    t = radius / 1.41421356237309504880  # sqrt(2)
-
-    # Aspect correct so dragging in a non-square view doesn't squash the direction.
-    # So diagonal motion rotates the same direction the cursor is moving.
-
-    size_min = min(rect.width, rect.height)
-    aspect_x, aspect_y = size_min / rect.width, size_min / rect.height
-
-    # Normalize x and y
-    vec_x = event_xy[0] - rect.center[0] / rect.width * aspect_x / 2.0
-    vec_y = event_xy[1] - rect.center[1] / rect.height * aspect_y / 2.0
-
-    d = Vector((vec_x, vec_y)).magnitude
-    if d < t:
-        # Inside sphere
-        vec_z = sqrt(pow(radius, 2) - pow(d, 2))
-    else:
-        # On hyperbola
-        vec_z = pow(t, 2) / d
-
-    return vec_x, vec_y, vec_z
-
-
-class DragRect:
-    def __init__(self, top_left_x, top_left_y, bottom_right_x, bottom_right_y):
-        self._top_left_x = top_left_x
-        self._top_left_y = top_left_y
-        self._btm_right_x = bottom_right_x
-        self._btm_right_y = bottom_right_y
-
-        self.height = top_left_y - bottom_right_y
-        self.width = top_left_x - bottom_right_x
-
-        self.center = (top_left_x + bottom_right_x) / 2, (top_left_y + bottom_right_y) / 2
-
-    def __str__(self):
-        return f"top: ({self._top_left_x}, {self._top_left_y}), btm: ({self._btm_right_x}, {self._btm_right_y})," \
-               f" center: {self.center}, h: {self.height}, w: {self.width}"
-
-
-def mod(a, b):
-  return a - (b * int(a / b))
-
-
-def angle_wrap_rad(angle):
-    """Allow for rotation beyond the interval [-pi, pi]"""
-    return mod(angle + pi, pi * 2.0) - pi
-
-
 class BonezMo3D(BazeMo):
     bl_idname = "VIEW3D_GT_pizmo_bone3d"
 
@@ -203,6 +150,7 @@ class BonezMo3D(BazeMo):
         "_init_mouse_x",
         "_init_mouse_y",
         "_init_matrix",
+        "_flip_delta"
     )
 
     def draw(self, context):
@@ -283,6 +231,18 @@ class BonezMo3D(BazeMo):
         self._init_mouse_x = event.mouse_x
         self._init_mouse_y = event.mouse_y
         self._init_matrix = context.object.pose.bones[bone.name].matrix.copy()
+
+        # if we the drag point opposites the bone direction, we have to flip the mouse delta when we apply a rotation
+        region_3d = context.area.spaces.active.region_3d
+        bone_head_screen = location_3d_to_region_2d(context.area, region_3d, bone.head_local)
+        bone_tail_screen = location_3d_to_region_2d(context.area, region_3d, bone.tail_local)
+
+        tail_offs = bone_tail_screen - bone_head_screen
+        tail_offs.normalize()
+        mouse_offs = Vector((self._init_mouse_x - context.area.x, self._init_mouse_y - context.area.y)) - bone_head_screen
+        mouse_offs.normalize()
+
+        self._init_flip_delta = tail_offs.dot(mouse_offs) < 0.0
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
@@ -317,6 +277,8 @@ class BonezMo3D(BazeMo):
             self._init_mouse_x = event.mouse_x
             self._init_mouse_y = event.mouse_y
         elif bone.pizmo_drag_action == "rotate":
+            if self._init_flip_delta:
+                screen_delta *= -1
             # compute new look-at
             t_mat = self._init_matrix.to_3x3().transposed()
             y_axis = t_mat[1]
