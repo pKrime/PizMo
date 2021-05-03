@@ -234,8 +234,9 @@ class BonezMo3D(BazeMo):
 
         # if we the drag point opposites the bone direction, we have to flip the mouse delta when we apply a rotation
         region_3d = context.area.spaces.active.region_3d
-        bone_head_screen = location_3d_to_region_2d(context.area, region_3d, bone.head_local)
-        bone_tail_screen = location_3d_to_region_2d(context.area, region_3d, bone.tail_local)
+        pbone = context.object.pose.bones[bone.name]
+        bone_head_screen = location_3d_to_region_2d(context.area, region_3d, pbone.head)
+        bone_tail_screen = location_3d_to_region_2d(context.area, region_3d, pbone.tail)
 
         tail_offs = bone_tail_screen - bone_head_screen
         tail_offs.normalize()
