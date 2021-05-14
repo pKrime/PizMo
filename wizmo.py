@@ -5,7 +5,8 @@ from bpy.types import (
     GizmoGroup,
 )
 
-from mathutils import Matrix, Vector
+from bpy_extras.view3d_utils import location_3d_to_region_2d
+from mathutils import Matrix, Vector, Quaternion
 
 from . import shapes
 from . import storage
@@ -146,6 +147,10 @@ class BonezMo3D(BazeMo):
         "bone_name",
         "bone_follow",
         "_meshshape",
+        "_init_mouse_x",
+        "_init_mouse_y",
+        "_init_matrix",
+        "_flip_delta"
     )
 
     def draw(self, context):
@@ -223,13 +228,88 @@ class BonezMo3D(BazeMo):
         bones = context.object.data.bones
         bones.active = bones[bone.name]
 
+        self._init_mouse_x = event.mouse_x
+        self._init_mouse_y = event.mouse_y
+        self._init_matrix = context.object.pose.bones[bone.name].matrix.copy()
+
+        # if we the drag point opposites the bone direction, we have to flip the mouse delta when we apply a rotation
+        region_3d = context.area.spaces.active.region_3d
+        pbone = context.object.pose.bones[bone.name]
+        bone_head_screen = location_3d_to_region_2d(context.area, region_3d, pbone.head)
+        bone_tail_screen = location_3d_to_region_2d(context.area, region_3d, pbone.tail)
+
+        tail_offs = bone_tail_screen - bone_head_screen
+        tail_offs.normalize()
+        mouse_offs = Vector((self._init_mouse_x - context.area.x, self._init_mouse_y - context.area.y)) - bone_head_screen
+        mouse_offs.normalize()
+
+        self._init_flip_delta = tail_offs.dot(mouse_offs) < 0.0
         return {'RUNNING_MODAL'}
 
     def exit(self, context, cancel):
+        self.hide = False
         context.area.header_text_set(None)
 
     def modal(self, context, event, tweak):
-        return {'FINISHED'}
+        bone = context.object.pose.bones[self.bone_name]
+        if bone.pizmo_drag_action == "none":
+            return {'FINISHED'}
+
+        self.hide = True
+        delta_x = (event.mouse_x - self._init_mouse_x) / 100
+        delta_y = (event.mouse_y - self._init_mouse_y) / 100
+        if 'SNAP' in tweak:
+            delta_x = round(delta_x)
+            delta_y = round(delta_y)
+        if 'PRECISE' in tweak:
+            delta_x /= 10.0
+            delta_y /= 10.0
+
+        # Screen coordinates conversion
+        region_3d = context.area.spaces.active.region_3d
+        screen_delta = Vector([delta_x, delta_y, 0]) @ region_3d.view_matrix
+
+        if bone.pizmo_drag_action == "translate":
+            screen_delta = screen_delta @ bone.matrix
+            for i, d in enumerate(screen_delta):
+                if not bone.lock_location[i]:
+                    bone.location[i] += d
+
+            self._init_mouse_x = event.mouse_x
+            self._init_mouse_y = event.mouse_y
+        elif bone.pizmo_drag_action == "rotate":
+            if self._init_flip_delta:
+                screen_delta *= -1
+            # compute new look-at
+            t_mat = self._init_matrix.to_3x3().transposed()
+            y_axis = t_mat[1]
+            z_axis = t_mat[2]
+
+            new_y_axis = y_axis + screen_delta
+            new_y_axis.normalize()
+
+            new_x_axis = new_y_axis.cross(z_axis)
+            new_x_axis.normalize()
+            new_z_axis = new_x_axis.cross(new_y_axis)
+            new_z_axis.normalize()
+
+            new_mat = Matrix((new_x_axis, new_y_axis, new_z_axis)).transposed()
+            new_mat = new_mat.to_4x4()
+            new_mat.translation = self._init_matrix.translation
+
+            bone.matrix = new_mat
+        else:
+            # scale
+            diagonal = Vector((delta_x, delta_y))
+            diagonal.normalize()
+            scale = 1.0 + diagonal.dot(Vector((1.0, 0.0))) / 10
+
+            for i in range(3):
+                if not bone.lock_scale[i]:
+                    bone.scale[i] *= scale
+
+        return {'RUNNING_MODAL'}
+
 
 
 class GrouzMo(GizmoGroup):
