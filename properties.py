@@ -45,6 +45,10 @@ def register_bone_properties():
                                                       name="Drag Action",
                                                       default='none')
 
+    bpy.types.PoseBone.pizmo_alt_drag_action = EnumProperty(items=drag_action,
+                                                      name="Drag Action Alt",
+                                                      default='none')
+
     bpy.types.PoseBone.pizmo_shape_scale = FloatProperty(name="Scale of widget shape",
                                                             description="Scale the widget",
                                                             min=0.0, max=1.0, default=1.0,
@@ -131,6 +135,7 @@ def unregister_properties():
     del bpy.types.PoseBone.pizmo_vis_type
     del bpy.types.PoseBone.pizmo_vis_shape
     del bpy.types.PoseBone.pizmo_drag_action
+    del bpy.types.PoseBone.pizmo_alt_drag_action
     del bpy.types.PoseBone.pizmo_shape_frame
     del bpy.types.PoseBone.pizmo_shape_scale
     del bpy.types.PoseBone.pizmo_shape_offset

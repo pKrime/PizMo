@@ -252,7 +252,12 @@ class BonezMo3D(BazeMo):
 
     def modal(self, context, event, tweak):
         bone = context.object.pose.bones[self.bone_name]
-        if bone.pizmo_drag_action == "none":
+        if event.alt:
+            drag_action = bone.pizmo_alt_drag_action
+        else:
+            drag_action = bone.pizmo_drag_action
+
+        if drag_action == "none":
             return {'FINISHED'}
 
         self.hide = True
@@ -269,7 +274,7 @@ class BonezMo3D(BazeMo):
         region_3d = context.area.spaces.active.region_3d
         screen_delta = Vector([delta_x, delta_y, 0]) @ region_3d.view_matrix
 
-        if bone.pizmo_drag_action == "translate":
+        if drag_action == "translate":
             screen_delta = screen_delta @ bone.matrix
             for i, d in enumerate(screen_delta):
                 if not bone.lock_location[i]:
@@ -277,7 +282,7 @@ class BonezMo3D(BazeMo):
 
             self._init_mouse_x = event.mouse_x
             self._init_mouse_y = event.mouse_y
-        elif bone.pizmo_drag_action == "rotate":
+        elif drag_action == "rotate":
             if self._init_flip_delta:
                 screen_delta *= -1
             # compute new look-at

@@ -71,6 +71,9 @@ class BONE_PT_pizmo_properties(bpy.types.Panel):
         row = layout.row()
         row.prop(pbone, 'pizmo_drag_action')
 
+        row = layout.row()
+        row.prop(pbone, 'pizmo_alt_drag_action')
+
         if pbone.pizmo_vis_type == 'mesh':
             row = layout.row()
             row.prop(pbone, 'pizmo_vis_mesh')
