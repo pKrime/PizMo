@@ -30,6 +30,7 @@ def register_bone_properties():
         ("none", "None", "Drag doesn't do anything"),
         ("translate", "Translate", "Drag to translate"),
         ("rotate", "Rotate", "Drag to rotate"),
+        ("twist", "Twist", "Twist along Y axis"),
         ("scale", "Scale", "Drag to scale"),
     )
 

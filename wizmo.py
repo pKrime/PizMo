@@ -303,6 +303,20 @@ class BonezMo3D(BazeMo):
             new_mat.translation = self._init_matrix.translation
 
             bone.matrix = new_mat
+        elif drag_action == "twist":
+            # TODO: twist toward visual drag
+            if abs(delta_x) > abs(delta_y):
+                angle = delta_x
+            else:
+                angle = delta_y
+            angle /= 10.0
+
+            quat = bone.matrix.to_quaternion()
+            new_quat = quat @ Quaternion(Vector((0, 1, 0)), angle)
+
+            new_mat = new_quat.to_matrix().to_4x4()
+            new_mat.translation = self._init_matrix.translation
+            bone.matrix = new_mat
         else:
             # scale
             diagonal = Vector((delta_x, delta_y))
