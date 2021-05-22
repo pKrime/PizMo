@@ -375,7 +375,7 @@ class GrouzMo(GizmoGroup):
                     wdg_shape = shapes.Sphere(scale=bone.pizmo_shape_scale, offset=bone.pizmo_shape_offset)
                 else:
                     # TODO: report warning
-                    print("coudl not generate shape", bone.pizmo_vis_shape, "for", bone.name)
+                    print("could not generate shape", bone.pizmo_vis_shape, "for", bone.name)
                     continue
 
                 wdg_verts = wdg_shape.frame_vertices() if bone.pizmo_shape_frame else wdg_shape.vertices
