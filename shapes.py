@@ -251,7 +251,7 @@ class MeshShape3D(BasicShape):
         mesh = ob.to_mesh()
         mesh.calc_loop_triangles()
 
-        verts = np.array([mesh.vertices[i].co for i in self._indices], 'f')
+        verts = np.array([ob.matrix_world @ mesh.vertices[i].co for i in self._indices], 'f')
 
         # scale
         average = np.average(verts, axis=0)
