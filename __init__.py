@@ -18,7 +18,7 @@
 
 bl_info = {
     "name": "PizMo",
-    "version": (0, 2, 2),
+    "version": (0, 2, 3),
     "author": "Paolo Acampora",
     "blender": (2, 90, 0),
     "description": "Display Bone Picker along object",
