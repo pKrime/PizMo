@@ -298,9 +298,9 @@ class BonezMo3D(BazeMo):
             new_z_axis = new_x_axis.cross(new_y_axis)
             new_z_axis.normalize()
 
-            new_mat = Matrix((new_x_axis, new_y_axis, new_z_axis)).transposed()
-            new_mat = new_mat.to_4x4()
-            new_mat.translation = self._init_matrix.translation
+            rot_mat = Matrix((new_x_axis, new_y_axis, new_z_axis)).transposed()
+            new_mat = Matrix.LocRotScale(self._init_matrix.translation, rot_mat,
+                                         self._init_matrix.to_scale())
 
             bone.matrix = new_mat
         elif drag_action == "twist":
