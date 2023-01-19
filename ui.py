@@ -1,4 +1,5 @@
 import bpy
+from . import operators
 
 
 def panel_checkbox(self, context):
@@ -47,6 +48,9 @@ class ARMATURE_PT_pizmo_properties(bpy.types.Panel):
 
         row = layout.row()
         row.prop(context.object.data, 'pizmo_widget_scale')
+
+        row = layout.row()
+        row.operator(operators.FromExpyKit.bl_idname)
 
 
 class BONE_PT_pizmo_properties(bpy.types.Panel):

@@ -31,11 +31,13 @@ import bpy
 from . import wizmo
 from . import properties
 from . import ui
+from . import operators
 
 from importlib import reload
 reload(wizmo)
 reload(properties)
 reload(ui)
+reload(operators)
 
 from .wizmo import BonezMo3D, ArmzMo
 from .wizmo import GrouzMo, GrouzMoRoots
@@ -46,6 +48,7 @@ from .ui import ARMATURE_PT_pizmo_properties
 # REGISTER #
 def register():
     properties.register_properties()
+    operators.register()
 
     bpy.utils.register_class(ArmzMo)
     bpy.utils.register_class(BonezMo3D)
@@ -67,4 +70,5 @@ def unregister():
     bpy.utils.unregister_class(BonezMo3D)
     bpy.utils.unregister_class(ArmzMo)
 
+    operators.unregister()
     properties.unregister_properties()
